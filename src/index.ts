@@ -114,7 +114,8 @@ async function main() {
       }
     }
     const totalSections = allCourses.reduce((n, c) => n + c.sections.length, 0)
-    console.log(`    CIS: ${allCourses.length} courses, ${totalSections} sections`)
+    const indSections = allCourses.reduce((n, c) => n + c.sections.filter((s) => s.typeCode === "IND").length, 0)
+    console.log(`    CIS: ${allCourses.length} courses, ${totalSections} sections${indSections > 0 ? ` (${indSections} independent study excluded)` : ""}`)
 
     if (allCourses.length === 0) {
       console.log(`    Skipping — no courses`)

@@ -35,9 +35,13 @@ export function extractNameParts(grayBookName: string): { lastName: string; firs
   return { lastName, firstInitial: firstPart[0].toLowerCase() }
 }
 
+/** Section types excluded from matching (not classroom instruction) */
+const EXCLUDED_SECTION_TYPES = new Set(["IND"])
+
 /**
  * Match a department's Grey Book faculty against CIS courses for specific subjects.
  * Courses are scoped to the department's mapped CIS subjects to avoid name collisions.
+ * Sections with excluded types (e.g. Independent Study) are filtered out before matching.
  */
 export function matchFacultyToCourses(
   faculty: ProcessedFaculty[],
@@ -46,11 +50,12 @@ export function matchFacultyToCourses(
   const matched: MatchedFaculty[] = []
   const unmatchedFaculty: ProcessedFaculty[] = []
 
-  // Build a lookup of CIS instructors from the scoped courses
+  // Build a lookup of CIS instructors from the scoped courses, excluding non-instructional sections
   const cisInstructors = new Map<string, { instructor: CISInstructor; courses: { subject: string; number: string; label: string; sectionNumber: string; crn: number }[] }>()
 
   for (const course of courses) {
     for (const section of course.sections) {
+      if (EXCLUDED_SECTION_TYPES.has(section.typeCode)) continue
       for (const instr of section.instructors) {
         const cisLastName = normalizeLastName(instr.lastName)
         const cisFirstInitial = instr.firstName.toLowerCase().charAt(0)
