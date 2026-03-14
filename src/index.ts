@@ -3,7 +3,7 @@ import { loadOrCreateMapping } from "./departments"
 import { fetchCoursesForSubject, type CISCourse } from "./cis"
 import { parseDepartment, processFaculty, type ProcessedFaculty } from "./salaries"
 import { matchFacultyToCourses } from "./matching"
-import { analyzeDepartment, type DepartmentAnalysis } from "./analysis"
+import { analyzeDepartment, isTeachingFocused, type DepartmentAnalysis } from "./analysis"
 import { connectLDAP, getEnrollmentForSection, type LDAPClient } from "./ldap"
 import { generateReport } from "./report"
 
@@ -21,15 +21,17 @@ async function batch<T, R>(items: T[], concurrency: number, fn: (item: T) => Pro
 
 interface EnrollmentResult {
   uniqueStudents: number
+  courseEnrollments: Record<string, number>
   ldapFailures: number
   totalSections: number
 }
 
 async function getEnrollment(
   client: LDAPClient,
-  sections: { subject: string; number: string; sectionNumber: string; crn: number }[],
+  sections: { subject: string; number: string; sectionNumber: string; crn: number; courseKey: string }[],
 ): Promise<EnrollmentResult> {
   const allNetIDs = new Set<string>()
+  const courseNetIDs = new Map<string, Set<string>>()
   let processed = 0
   let ldapFailures = 0
 
@@ -42,7 +44,11 @@ async function getEnrollment(
         q.sectionNumber,
         q.crn,
       )
-      for (const id of netIDs) allNetIDs.add(id)
+      for (const id of netIDs) {
+        allNetIDs.add(id)
+        if (!courseNetIDs.has(q.courseKey)) courseNetIDs.set(q.courseKey, new Set())
+        courseNetIDs.get(q.courseKey)!.add(id)
+      }
     } catch {
       ldapFailures++
     }
@@ -56,7 +62,13 @@ async function getEnrollment(
   if (ldapFailures > 0) {
     console.log(`    LDAP failures: ${ldapFailures}/${sections.length} sections`)
   }
-  return { uniqueStudents: allNetIDs.size, ldapFailures, totalSections: sections.length }
+
+  const courseEnrollments: Record<string, number> = {}
+  for (const [key, ids] of courseNetIDs) {
+    courseEnrollments[key] = ids.size
+  }
+
+  return { uniqueStudents: allNetIDs.size, courseEnrollments, ldapFailures, totalSections: sections.length }
 }
 
 async function main() {
@@ -128,13 +140,14 @@ async function main() {
     console.log(`    Teaching: ${matchResult.matched.length}/${faculty.length} (${teachingPct}%)`)
 
     // Collect all sections from matched faculty for enrollment
-    const sectionSet = new Map<number, { subject: string; number: string; sectionNumber: string; crn: number }>()
+    const sectionSet = new Map<number, { subject: string; number: string; sectionNumber: string; crn: number; courseKey: string }>()
     const courseKeys = new Set<string>()
     for (const m of matchResult.matched) {
       for (const c of m.coursesTeaching) {
-        courseKeys.add(`${c.subject}-${c.number}`)
+        const courseKey = `${c.subject}-${c.number}`
+        courseKeys.add(courseKey)
         for (const s of c.sections) {
-          sectionSet.set(s.crn, { subject: c.subject, number: c.number, sectionNumber: s.sectionNumber, crn: s.crn })
+          sectionSet.set(s.crn, { subject: c.subject, number: c.number, sectionNumber: s.sectionNumber, crn: s.crn, courseKey })
         }
       }
     }
@@ -152,6 +165,13 @@ async function main() {
     const enrollment = await getEnrollment(client, [...sectionSet.values()])
     console.log(`    Students: ${enrollment.uniqueStudents.toLocaleString()}`)
 
+    // Build per-faculty course assignment data
+    const facultyCourses = matchResult.matched.map(m => ({
+      facultyType: isTeachingFocused(m.faculty.facultyType) ? 'teaching' as const : 'research' as const,
+      salary: m.faculty.totalProposedSalary,
+      courseKeys: m.coursesTeaching.map(c => `${c.subject}-${c.number}`),
+    }))
+
     // Analyze
     const analysis = analyzeDepartment(
       mapping.grayBookId,
@@ -163,6 +183,8 @@ async function main() {
       {
         ldapFailures: enrollment.ldapFailures,
         totalLdapQueries: enrollment.totalSections,
+        facultyCourses,
+        courseEnrollments: enrollment.courseEnrollments,
       },
     )
     // Store the mapped CIS subjects on the analysis for reporting

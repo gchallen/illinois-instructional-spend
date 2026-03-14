@@ -61,12 +61,20 @@ export interface DepartmentAnalysis {
   perStudent: number
   perCreditHour: number
 
+  // Per-course allocation data
+  facultyCourses: {
+    facultyType: 'teaching' | 'research'
+    salary: number
+    courseKeys: string[]
+  }[]
+  courseEnrollments: Record<string, number>  // courseKey → unique students
+
   // Data quality
   dataQuality: DataQualityFlags
 }
 
 const DEFAULT_TEACHING_PCT = 0.7
-const DEFAULT_RESEARCH_PCT = 0.3
+const DEFAULT_RESEARCH_PCT = 0.4
 
 export function analyzeDepartment(
   grayBookId: string,
@@ -78,6 +86,8 @@ export function analyzeDepartment(
   options?: {
     ldapFailures?: number
     totalLdapQueries?: number
+    facultyCourses?: DepartmentAnalysis['facultyCourses']
+    courseEnrollments?: Record<string, number>
   },
 ): DepartmentAnalysis {
   const allFaculty = [...matchResult.matched.map((m) => m.faculty), ...matchResult.unmatchedFaculty]
@@ -177,6 +187,8 @@ export function analyzeDepartment(
     courseCount,
     perStudent,
     perCreditHour,
+    facultyCourses: options?.facultyCourses ?? [],
+    courseEnrollments: options?.courseEnrollments ?? {},
     dataQuality,
   }
 }
