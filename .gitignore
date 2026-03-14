@@ -3,3 +3,4 @@ node_modules/
 .env
 output/
 test-results/
+bun.lock
