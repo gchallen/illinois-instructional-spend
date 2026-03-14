@@ -30,10 +30,6 @@ export function generateReport(results: DepartmentAnalysis[]) {
   const totalTeachingSalary = sorted.reduce((s, r) => s + r.totalTeachingFocusedSalary, 0)
   const totalResearchSalary = sorted.reduce((s, r) => s + r.totalResearchFocusedSalary, 0)
   const totalStudents = sorted.reduce((s, r) => s + r.uniqueStudents, 0)
-  const totalSalary = sorted.reduce((s, r) => s + r.totalProposedSalary, 0)
-  const totalMatchedTeachingSalary = sorted.reduce((s, r) => s + r.matchedTeachingFocusedSalary, 0)
-  const totalMatchedResearchSalary = sorted.reduce((s, r) => s + r.matchedResearchFocusedSalary, 0)
-  const totalUnmatchedNonAdmin = sorted.reduce((s, r) => s + r.unmatchedNonAdminSalary, 0)
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -42,17 +38,22 @@ export function generateReport(results: DepartmentAnalysis[]) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="${faviconDataUri()}">
   <title>UIUC Instructional Salary Spend — Spring 2026</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; color: #333; }
     h1 { text-align: center; margin-bottom: 8px; font-size: 1.5rem; }
     .subtitle { text-align: center; color: #666; margin-bottom: 20px; font-size: 0.9rem; }
 
+    .summary-cards { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
+    .card { background: white; border-radius: 8px; padding: 12px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; min-width: 150px; }
+    .card-label { font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+    .card-value { font-size: 1.2rem; font-weight: 700; }
+
     .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; padding: 12px 16px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .controls label { font-size: 0.85rem; font-weight: 600; color: #555; }
     .controls input, .controls select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; }
     .controls input[type="text"] { width: 200px; }
+    .controls input[type="checkbox"] { margin-right: 4px; }
     .metric-toggle { display: flex; gap: 4px; }
     .metric-toggle button { padding: 6px 12px; border: 1px solid #ddd; background: white; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
     .metric-toggle button.active { background: #2563eb; color: white; border-color: #2563eb; }
@@ -63,12 +64,9 @@ export function generateReport(results: DepartmentAnalysis[]) {
     .slider-group input[type="range"] { width: 100px; }
     .slider-group .slider-val { font-size: 0.85rem; font-weight: 600; min-width: 32px; text-align: right; }
 
-    .chart-container { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow-x: auto; }
-    .chart-inner { min-width: 800px; height: 500px; }
-
     .table-wrap { overflow-x: auto; margin-bottom: 20px; }
     table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.8rem; }
-    th { background: #2563eb; color: white; padding: 8px 6px; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; }
+    th { background: #2563eb; color: white; padding: 8px 6px; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 2; }
     th:hover { background: #1d4ed8; }
     th .sort-arrow { opacity: 0.5; font-size: 0.7rem; margin-left: 3px; }
     th.sorted .sort-arrow { opacity: 1; }
@@ -77,15 +75,35 @@ export function generateReport(results: DepartmentAnalysis[]) {
     tr.expanded td { background: #e8eeff; }
     .right { text-align: right; }
     .detail-row td { padding: 0; background: #fafbff; }
+    .detail-row:hover td { background: #fafbff; }
     .detail-content { padding: 12px 20px; font-size: 0.8rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
     .detail-section h4 { font-size: 0.85rem; color: #2563eb; margin-bottom: 6px; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px; }
     .detail-section dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; }
     .detail-section dt { color: #666; }
     .detail-section dd { font-weight: 600; text-align: right; }
 
+    .bin-header td { background: #e8ecf1; font-weight: 700; font-size: 0.85rem; padding: 10px 6px; border-bottom: 2px solid #9db2d6; color: #333; cursor: pointer; }
+    .bin-header:hover td { background: #dde3ec; }
+    .bin-summary td { background: #f5f7fa; font-size: 0.78rem; color: #666; font-style: italic; border-bottom: 2px solid #e5e7eb; }
+    .bin-summary:hover td { background: #f5f7fa; }
+
+    .chart-section { margin-bottom: 20px; }
+    .chart-section summary { cursor: pointer; font-weight: 600; font-size: 0.95rem; padding: 12px 16px; color: #555; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); list-style: none; }
+    .chart-section summary::-webkit-details-marker { display: none; }
+    .chart-section summary::before { content: '\\25B6'; margin-right: 8px; font-size: 0.7rem; display: inline-block; transition: transform 0.15s; }
+    .chart-section[open] summary::before { transform: rotate(90deg); }
+    .chart-section[open] summary { border-radius: 8px 8px 0 0; margin-bottom: 0; }
+    .chart-container { background: white; border-radius: 0 0 8px 8px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .scatter-controls { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; font-size: 0.85rem; flex-wrap: wrap; }
+    .scatter-controls label { font-weight: 600; color: #555; }
+    .scatter-controls select { padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem; }
+    #scatterPlot { display: block; }
+
+    #tooltip { display: none; position: fixed; background: white; border: 1px solid #ccc; border-radius: 4px; padding: 8px 12px; font-size: 0.8rem; pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; max-width: 280px; line-height: 1.5; }
+    #tooltip strong { display: block; margin-bottom: 2px; }
+
     .note { margin-top: 16px; font-size: 0.8rem; color: #888; text-align: center; line-height: 1.5; }
 
-    .highlight { background: #fef08a; }
     .warning-badge { display: inline-block; font-size: 0.65rem; padding: 1px 5px; border-radius: 3px; margin-left: 4px; font-weight: 600; vertical-align: middle; }
     .warning-badge.ldap { background: #ede9fe; color: #5b21b6; }
     .warning-badge.collision { background: #e0e7ff; color: #3730a3; }
@@ -104,22 +122,30 @@ export function generateReport(results: DepartmentAnalysis[]) {
   <h1>UIUC Instructional Salary Spend Per Student</h1>
   <div class="subtitle">Spring 2026 — Grey Book Faculty Salaries &times; CIS Course Data &times; LDAP Enrollment</div>
 
-  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:16px">
-    <div style="background:white;border-radius:8px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;min-width:180px">
-      <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Teaching Spend</div>
-      <div style="font-size:1.3rem;font-weight:700;color:#2563eb" id="totalTeachingSpend"></div>
+  <div class="summary-cards">
+    <div class="card">
+      <div class="card-label">Teaching Spend</div>
+      <div class="card-value" style="color:#2563eb" id="totalTeachingSpend"></div>
     </div>
-    <div style="background:white;border-radius:8px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;min-width:180px">
-      <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Research Spend</div>
-      <div style="font-size:1.3rem;font-weight:700;color:#7c3aed" id="totalResearchSpend"></div>
+    <div class="card">
+      <div class="card-label">Research Spend</div>
+      <div class="card-value" style="color:#7c3aed" id="totalResearchSpend"></div>
     </div>
-    <div style="background:white;border-radius:8px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;min-width:180px">
-      <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Non-Admin Faculty Salary</div>
-      <div style="font-size:1.3rem;font-weight:700;color:#333">$${Math.round(totalTeachingSalary + totalResearchSalary).toLocaleString()}</div>
+    <div class="card">
+      <div class="card-label">Non-Admin Faculty Salary</div>
+      <div class="card-value" style="color:#333">$${Math.round(totalTeachingSalary + totalResearchSalary).toLocaleString()}</div>
     </div>
-    <div style="background:white;border-radius:8px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;min-width:180px">
-      <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Total Students</div>
-      <div style="font-size:1.3rem;font-weight:700;color:#333">${totalStudents.toLocaleString()}</div>
+    <div class="card">
+      <div class="card-label">Total Students</div>
+      <div class="card-value" style="color:#333">${totalStudents.toLocaleString()}</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Median $/Student</div>
+      <div class="card-value" style="color:#059669" id="medianPerStudent"></div>
+    </div>
+    <div class="card">
+      <div class="card-label">Mean $/Student</div>
+      <div class="card-value" style="color:#059669" id="meanPerStudent"></div>
     </div>
   </div>
 
@@ -139,6 +165,8 @@ export function generateReport(results: DepartmentAnalysis[]) {
       <button data-metric="perCreditHour">$/Credit Hr</button>
       <button data-metric="instructionalSpend">Total Spend</button>
     </div>
+
+    <label><input type="checkbox" id="binToggle" checked> Group by enrollment</label>
 
     <div class="stat-pills">
       <span id="deptCount"></span>
@@ -160,12 +188,6 @@ export function generateReport(results: DepartmentAnalysis[]) {
     </div>
   </div>
 
-  <div class="chart-container">
-    <div class="chart-inner">
-      <canvas id="spendChart"></canvas>
-    </div>
-  </div>
-
   <div class="table-wrap">
   <table id="dataTable">
     <thead>
@@ -184,11 +206,26 @@ export function generateReport(results: DepartmentAnalysis[]) {
   </table>
   </div>
 
+  <details class="chart-section" open>
+    <summary>Scatter Plot</summary>
+    <div class="chart-container">
+      <div class="scatter-controls">
+        <label for="scatterX">X axis:</label>
+        <select id="scatterX"></select>
+        <label for="scatterY">Y axis:</label>
+        <select id="scatterY"></select>
+      </div>
+      <svg id="scatterPlot"></svg>
+    </div>
+  </details>
+
+  <div id="tooltip"></div>
+
   <div class="note">
     Teaching-focused faculty: lecturers, instructors, clinical. Research-focused: tenure-track and research professors.<br>
     Instructional % = estimated share of salary devoted to teaching (adjust with sliders above).<br>
     Teaching spend uses only <strong>matched</strong> faculty salary. Unmatched non-admin faculty salary is classified as research spend. Enrollment is counted across all CIS subjects where matched faculty teach.<br>
-    Click any row to expand details. Click column headers to sort.<br>
+    Click any row to expand details. Click column headers to sort. Click bin headers to collapse/expand.<br>
     Generated ${new Date().toISOString().slice(0, 10)}.
   </div>
 
@@ -231,6 +268,29 @@ export function generateReport(results: DepartmentAnalysis[]) {
     const DATA = ${JSON.stringify(sorted)};
     const EXCLUDED = ${JSON.stringify(excluded)};
 
+    const ENROLLMENT_BINS = [
+      { label: '< 100 students', min: 0, max: 100 },
+      { label: '100 \\u2013 500 students', min: 100, max: 500 },
+      { label: '500 \\u2013 1,000 students', min: 500, max: 1000 },
+      { label: '1,000 \\u2013 5,000 students', min: 1000, max: 5000 },
+      { label: '5,000+ students', min: 5000, max: Infinity },
+    ];
+
+    const BIN_COLORS = ['#c0392b', '#e67e22', '#f1c40f', '#27ae60', '#2980b9'];
+
+    const AXIS_OPTIONS = [
+      { key: 'uniqueStudents', label: 'Students', get: r => r.uniqueStudents, fmt: n => n.toLocaleString() },
+      { key: 'totalFaculty', label: 'Faculty Count', get: r => r.totalFaculty, fmt: n => String(n) },
+      { key: 'matchedFaculty', label: 'Matched Faculty', get: r => r.matchedFaculty, fmt: n => String(n) },
+      { key: 'matchRate', label: 'Match Rate', get: r => r.matchRate, fmt: n => (n * 100).toFixed(0) + '%' },
+      { key: 'courseCount', label: 'Courses', get: r => r.courseCount, fmt: n => String(n) },
+      { key: 'totalProposedSalary', label: 'Faculty Salary', get: r => r.totalProposedSalary, fmt: fmt$ },
+      { key: 'computed_metric', label: 'Current Metric ($/Student or $/Cr Hr)', get: r => computeMetric(r), fmt: fmt$ },
+      { key: 'computedSpend', label: 'Teaching Spend', get: r => computeSpend(r), fmt: fmt$ },
+      { key: 'computedResearch', label: 'Research Spend', get: r => computeResearchSpend(r), fmt: fmt$ },
+      { key: 'computedTeachingPct', label: 'Teaching %', get: r => computeTeachingPct(r), fmt: fmtPct },
+    ];
+
     let currentMetric = 'perStudent';
     let sortKey = 'computed_spend';
     let sortDir = -1;
@@ -240,16 +300,19 @@ export function generateReport(results: DepartmentAnalysis[]) {
     let teachingPct = 0.7;
     let researchPct = 0.3;
     let expandedId = null;
-    let chart = null;
+    let binsEnabled = true;
+    let collapsedBins = new Set();
+    let currentXAxis = 'uniqueStudents';
+    let currentYAxis = 'computed_metric';
 
     function computeSpend(r) {
-      return r.matchedTeachingFocusedSalary * teachingPct + r.matchedResearchFocusedSalary * researchPct;
+      return (r.matchedTeachingFocusedSalary || 0) * teachingPct + (r.matchedResearchFocusedSalary || 0) * researchPct;
     }
 
     function computeResearchSpend(r) {
-      return r.matchedTeachingFocusedSalary * (1 - teachingPct)
-           + r.matchedResearchFocusedSalary * (1 - researchPct)
-           + r.unmatchedNonAdminSalary;
+      return (r.matchedTeachingFocusedSalary || 0) * (1 - teachingPct)
+           + (r.matchedResearchFocusedSalary || 0) * (1 - researchPct)
+           + (r.unmatchedNonAdminSalary || 0);
     }
 
     function computeTeachingPct(r) {
@@ -275,10 +338,28 @@ export function generateReport(results: DepartmentAnalysis[]) {
     function fmt$(n) { return '$' + Math.round(n).toLocaleString(); }
     function fmtPct(n) { return (n * 100).toFixed(0) + '%'; }
 
+    function median(arr) {
+      if (!arr.length) return 0;
+      const s = [...arr].sort((a, b) => a - b);
+      const m = Math.floor(s.length / 2);
+      return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+    }
+
+    function mean(arr) {
+      return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+    }
+
     function metricLabel() {
-      if (currentMetric === 'perStudent') return 'Instructional Spend Per Student ($)';
-      if (currentMetric === 'perCreditHour') return 'Instructional Spend Per Credit Hour ($)';
-      return 'Total Instructional Spend ($)';
+      if (currentMetric === 'perStudent') return '$/Student';
+      if (currentMetric === 'perCreditHour') return '$/Credit Hour';
+      return 'Total Spend';
+    }
+
+    function getBinIndex(students) {
+      for (let i = 0; i < ENROLLMENT_BINS.length; i++) {
+        if (students >= ENROLLMENT_BINS[i].min && students < ENROLLMENT_BINS[i].max) return i;
+      }
+      return ENROLLMENT_BINS.length - 1;
     }
 
     function filteredData() {
@@ -293,7 +374,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
           (r.cisSubjects || []).some(s => s.toLowerCase().includes(q))
         );
       }
-      const type = sortKey === 'computed_spend' ? 'number' : (document.querySelector('th[data-key="' + sortKey + '"]')?.dataset.type || 'number');
+      const type = sortKey === 'computed_spend' || sortKey === 'computed_teaching_pct' ? 'number' : (document.querySelector('th[data-key="' + sortKey + '"]')?.dataset.type || 'number');
       d.sort((a, b) => {
         const va = getSortValue(a, sortKey);
         const vb = getSortValue(b, sortKey);
@@ -301,39 +382,6 @@ export function generateReport(results: DepartmentAnalysis[]) {
         return sortDir * ((va || 0) - (vb || 0));
       });
       return d;
-    }
-
-    function renderChart() {
-      const d = filteredData();
-      const labels = d.map(r => r.grayBookName.length > 25 ? r.grayBookName.slice(0, 23) + '...' : r.grayBookName);
-      const values = d.map(r => Math.round(computeMetric(r)));
-
-      const container = document.querySelector('.chart-inner');
-      container.style.minWidth = Math.max(800, d.length * 30) + 'px';
-
-      if (chart) chart.destroy();
-      chart = new Chart(document.getElementById('spendChart').getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            { label: metricLabel(), data: values, backgroundColor: 'rgba(37, 99, 235, 0.8)' },
-          ],
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            title: { display: true, text: metricLabel() + ' (teaching ' + Math.round(teachingPct*100) + '%, research ' + Math.round(researchPct*100) + '%)', font: { size: 16 } },
-            tooltip: { callbacks: { label: ctx => '$' + ctx.parsed.y.toLocaleString() } },
-            legend: { display: false },
-          },
-          scales: {
-            y: { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString() }, title: { display: true, text: metricLabel() } },
-            x: { ticks: { maxRotation: 90, minRotation: 45 } },
-          },
-        },
-      });
     }
 
     function renderTable() {
@@ -344,47 +392,94 @@ export function generateReport(results: DepartmentAnalysis[]) {
       document.getElementById('deptCount').textContent = d.length + ' depts';
       document.getElementById('studentCount').textContent = d.reduce((s, r) => s + r.uniqueStudents, 0).toLocaleString() + ' students';
 
-      // Update header label based on metric
       const prefix = currentMetric === 'perStudent' ? '$/Student' : currentMetric === 'perCreditHour' ? '$/Credit Hr' : 'Total Spend';
       document.querySelector('th[data-key="computed_spend"]').firstChild.textContent = prefix + ' ';
 
-      // Update sort indicators
       document.querySelectorAll('#dataTable th').forEach(th => {
         th.classList.toggle('sorted', th.dataset.key === sortKey);
         const arrow = th.querySelector('.sort-arrow');
         if (arrow && th.dataset.key === sortKey) {
-          arrow.textContent = sortDir === 1 ? '▴' : '▾';
+          arrow.textContent = sortDir === 1 ? '\\u25B4' : '\\u25BE';
         }
       });
 
-      for (const r of d) {
-        const tr = document.createElement('tr');
-        tr.style.cursor = 'pointer';
-        tr.dataset.id = r.grayBookId;
-        if (r.grayBookId === expandedId) tr.classList.add('expanded');
-        const badges = [];
-        if (r.dataQuality?.ldapFailureRate > 0.1) badges.push('<span class="warning-badge ldap">LDAP errors</span>');
-        if (r.dataQuality?.nameCollisions?.length > 0) badges.push('<span class="warning-badge collision">name collision</span>');
-        const subjects = (r.cisSubjects || []).join(', ');
-        tr.innerHTML = \`
-          <td><strong>\${r.grayBookName}</strong>\${badges.join('')}<br><span style="font-size:0.7rem;color:#888">\${subjects}</span></td>
-          <td class="right">\${r.totalFaculty} <span style="color:#888">(\${r.matchedFaculty})</span></td>
-          <td class="right">\${fmtPct(r.matchRate)}</td>
-          <td class="right">\${r.uniqueStudents.toLocaleString()}</td>
-          <td class="right">\${r.courseCount}</td>
-          <td class="right">\${fmt$(r.totalProposedSalary)}</td>
-          <td class="right">\${fmt$(computeMetric(r))}</td>
-          <td class="right">\${fmtPct(computeTeachingPct(r))}</td>
-        \`;
-        tr.addEventListener('click', () => toggleDetail(r.grayBookId));
-        tbody.appendChild(tr);
+      if (binsEnabled) {
+        renderBinnedRows(d, tbody);
+      } else {
+        renderFlatRows(d, tbody);
+      }
+    }
 
-        if (r.grayBookId === expandedId) {
-          const detailTr = document.createElement('tr');
-          detailTr.classList.add('detail-row');
-          detailTr.innerHTML = \`<td colspan="8">\${renderDetail(r)}</td>\`;
-          tbody.appendChild(detailTr);
+    function renderFlatRows(d, tbody) {
+      for (const r of d) {
+        appendDeptRow(r, tbody);
+      }
+    }
+
+    function renderBinnedRows(d, tbody) {
+      const bins = ENROLLMENT_BINS.map((bin, i) => ({
+        ...bin,
+        index: i,
+        departments: d.filter(r => r.uniqueStudents >= bin.min && r.uniqueStudents < bin.max),
+      })).filter(g => g.departments.length > 0);
+
+      for (const bin of bins) {
+        const metrics = bin.departments.map(r => computeMetric(r));
+        const med = median(metrics);
+        const avg = mean(metrics);
+        const totalStu = bin.departments.reduce((s, r) => s + r.uniqueStudents, 0);
+        const collapsed = collapsedBins.has(bin.index);
+
+        // Bin header row
+        const hdr = document.createElement('tr');
+        hdr.classList.add('bin-header');
+        hdr.innerHTML = \`
+          <td colspan="4"><span style="font-size:0.75rem;margin-right:6px">\${collapsed ? '\\u25B6' : '\\u25BC'}</span>\${bin.label} <span style="font-weight:400;color:#666">(\${bin.departments.length} depts, \${totalStu.toLocaleString()} students)</span></td>
+          <td class="right" colspan="2" style="font-weight:400;color:#666">Median \${metricLabel()}: \${fmt$(med)}</td>
+          <td class="right" colspan="2" style="font-weight:400;color:#666">Mean: \${fmt$(avg)}</td>
+        \`;
+        hdr.addEventListener('click', () => {
+          if (collapsedBins.has(bin.index)) collapsedBins.delete(bin.index);
+          else collapsedBins.add(bin.index);
+          renderTable();
+        });
+        tbody.appendChild(hdr);
+
+        if (!collapsed) {
+          for (const r of bin.departments) {
+            appendDeptRow(r, tbody);
+          }
         }
+      }
+    }
+
+    function appendDeptRow(r, tbody) {
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.dataset.id = r.grayBookId;
+      if (r.grayBookId === expandedId) tr.classList.add('expanded');
+      const badges = [];
+      if (r.dataQuality?.ldapFailureRate > 0.1) badges.push('<span class="warning-badge ldap">LDAP errors</span>');
+      if (r.dataQuality?.nameCollisions?.length > 0) badges.push('<span class="warning-badge collision">name collision</span>');
+      const subjects = (r.cisSubjects || []).join(', ');
+      tr.innerHTML = \`
+        <td><strong>\${r.grayBookName}</strong>\${badges.join('')}<br><span style="font-size:0.7rem;color:#888">\${subjects}</span></td>
+        <td class="right">\${r.totalFaculty} <span style="color:#888">(\${r.matchedFaculty})</span></td>
+        <td class="right">\${fmtPct(r.matchRate)}</td>
+        <td class="right">\${r.uniqueStudents.toLocaleString()}</td>
+        <td class="right">\${r.courseCount}</td>
+        <td class="right">\${fmt$(r.totalProposedSalary)}</td>
+        <td class="right">\${fmt$(computeMetric(r))}</td>
+        <td class="right">\${fmtPct(computeTeachingPct(r))}</td>
+      \`;
+      tr.addEventListener('click', () => toggleDetail(r.grayBookId));
+      tbody.appendChild(tr);
+
+      if (r.grayBookId === expandedId) {
+        const detailTr = document.createElement('tr');
+        detailTr.classList.add('detail-row');
+        detailTr.innerHTML = \`<td colspan="8">\${renderDetail(r)}</td>\`;
+        tbody.appendChild(detailTr);
       }
     }
 
@@ -412,9 +507,9 @@ export function generateReport(results: DepartmentAnalysis[]) {
             <dt>Teaching spend</dt><dd>\${fmt$(tSpend)} (\${fmtPct(tPct)})</dd>
             <dt>Research spend</dt><dd>\${fmt$(rSpend)} (\${fmtPct(rPct)})</dd>
             <dt style="border-top:1px solid #ddd;padding-top:4px;margin-top:4px">Non-admin faculty salary</dt><dd style="border-top:1px solid #ddd;padding-top:4px;margin-top:4px">\${fmt$(nonAdminSalary)}</dd>
-            <dt style="margin-top:8px">Matched teaching-focused</dt><dd>\${fmt$(r.matchedTeachingFocusedSalary)}</dd>
-            <dt>Matched research-focused</dt><dd>\${fmt$(r.matchedResearchFocusedSalary)}</dd>
-            <dt>Unmatched non-admin</dt><dd>\${fmt$(r.unmatchedNonAdminSalary)}</dd>
+            <dt style="margin-top:8px">Matched teaching-focused</dt><dd>\${fmt$(r.matchedTeachingFocusedSalary || 0)}</dd>
+            <dt>Matched research-focused</dt><dd>\${fmt$(r.matchedResearchFocusedSalary || 0)}</dd>
+            <dt>Unmatched non-admin</dt><dd>\${fmt$(r.unmatchedNonAdminSalary || 0)}</dd>
           </dl>
         </div>
         <div class="detail-section">
@@ -440,6 +535,208 @@ export function generateReport(results: DepartmentAnalysis[]) {
     function toggleDetail(id) {
       expandedId = expandedId === id ? null : id;
       renderTable();
+    }
+
+    // Scatter plot
+    function niceMax(val) {
+      if (val <= 0) return 1;
+      const mag = Math.pow(10, Math.floor(Math.log10(val)));
+      const norm = val / mag;
+      if (norm <= 1) return mag;
+      if (norm <= 2) return 2 * mag;
+      if (norm <= 5) return 5 * mag;
+      return 10 * mag;
+    }
+
+    function niceTicks(max, count) {
+      if (max <= 0) return [0];
+      const raw = max / count;
+      const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+      const norm = raw / mag;
+      let step;
+      if (norm <= 1) step = mag;
+      else if (norm <= 2) step = 2 * mag;
+      else if (norm <= 5) step = 5 * mag;
+      else step = 10 * mag;
+      const ticks = [];
+      for (let v = 0; v <= max + step * 0.01; v += step) ticks.push(v);
+      return ticks;
+    }
+
+    function renderChart() {
+      const ns = 'http://www.w3.org/2000/svg';
+      const d = filteredData();
+      const svg = document.getElementById('scatterPlot');
+      svg.innerHTML = '';
+
+      if (d.length === 0) return;
+
+      const xOpt = AXIS_OPTIONS.find(o => o.key === currentXAxis);
+      const yOpt = AXIS_OPTIONS.find(o => o.key === currentYAxis);
+      if (!xOpt || !yOpt) return;
+
+      const margin = { top: 16, right: 30, bottom: 48, left: 72 };
+      const width = 700;
+      const height = 420;
+      const plotW = width - margin.left - margin.right;
+      const plotH = height - margin.top - margin.bottom;
+
+      svg.setAttribute('width', width);
+      svg.setAttribute('height', height);
+      svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+      svg.style.width = '100%';
+      svg.style.maxWidth = width + 'px';
+
+      const points = d.map(r => ({
+        x: xOpt.get(r),
+        y: yOpt.get(r),
+        r: r,
+        bin: getBinIndex(r.uniqueStudents),
+      }));
+
+      const xMax = niceMax(Math.max(...points.map(p => p.x), 1));
+      const yMax = niceMax(Math.max(...points.map(p => p.y), 1));
+
+      function sx(v) { return margin.left + (v / xMax) * plotW; }
+      function sy(v) { return margin.top + plotH - (v / yMax) * plotH; }
+
+      // X axis ticks
+      const xTicks = niceTicks(xMax, 5);
+      for (const v of xTicks) {
+        // Tick line
+        const tick = document.createElementNS(ns, 'line');
+        tick.setAttribute('x1', sx(v)); tick.setAttribute('x2', sx(v));
+        tick.setAttribute('y1', sy(0)); tick.setAttribute('y2', sy(0) + 4);
+        tick.setAttribute('stroke', '#999'); tick.setAttribute('stroke-width', '1');
+        svg.appendChild(tick);
+        // Light grid line
+        if (v > 0) {
+          const grid = document.createElementNS(ns, 'line');
+          grid.setAttribute('x1', sx(v)); grid.setAttribute('x2', sx(v));
+          grid.setAttribute('y1', sy(0)); grid.setAttribute('y2', sy(yMax));
+          grid.setAttribute('stroke', '#eee'); grid.setAttribute('stroke-width', '1');
+          svg.appendChild(grid);
+        }
+        // Label
+        const label = document.createElementNS(ns, 'text');
+        label.setAttribute('x', sx(v));
+        label.setAttribute('y', sy(0) + 18);
+        label.setAttribute('text-anchor', 'middle');
+        label.setAttribute('font-size', '10');
+        label.setAttribute('fill', '#888');
+        label.textContent = xOpt.fmt(v);
+        svg.appendChild(label);
+      }
+
+      // Y axis ticks
+      const yTicks = niceTicks(yMax, 5);
+      for (const v of yTicks) {
+        const tick = document.createElementNS(ns, 'line');
+        tick.setAttribute('x1', sx(0) - 4); tick.setAttribute('x2', sx(0));
+        tick.setAttribute('y1', sy(v)); tick.setAttribute('y2', sy(v));
+        tick.setAttribute('stroke', '#999'); tick.setAttribute('stroke-width', '1');
+        svg.appendChild(tick);
+        if (v > 0) {
+          const grid = document.createElementNS(ns, 'line');
+          grid.setAttribute('x1', sx(0)); grid.setAttribute('x2', sx(xMax));
+          grid.setAttribute('y1', sy(v)); grid.setAttribute('y2', sy(v));
+          grid.setAttribute('stroke', '#eee'); grid.setAttribute('stroke-width', '1');
+          svg.appendChild(grid);
+        }
+        const label = document.createElementNS(ns, 'text');
+        label.setAttribute('x', sx(0) - 8);
+        label.setAttribute('y', sy(v) + 3);
+        label.setAttribute('text-anchor', 'end');
+        label.setAttribute('font-size', '10');
+        label.setAttribute('fill', '#888');
+        label.textContent = yOpt.fmt(v);
+        svg.appendChild(label);
+      }
+
+      // Axis lines
+      const xAxis = document.createElementNS(ns, 'line');
+      xAxis.setAttribute('x1', sx(0)); xAxis.setAttribute('x2', sx(xMax));
+      xAxis.setAttribute('y1', sy(0)); xAxis.setAttribute('y2', sy(0));
+      xAxis.setAttribute('stroke', '#999'); xAxis.setAttribute('stroke-width', '1');
+      svg.appendChild(xAxis);
+      const yAxis = document.createElementNS(ns, 'line');
+      yAxis.setAttribute('x1', sx(0)); yAxis.setAttribute('x2', sx(0));
+      yAxis.setAttribute('y1', sy(0)); yAxis.setAttribute('y2', sy(yMax));
+      yAxis.setAttribute('stroke', '#999'); yAxis.setAttribute('stroke-width', '1');
+      svg.appendChild(yAxis);
+
+      // Axis labels
+      const xLabel = document.createElementNS(ns, 'text');
+      xLabel.setAttribute('x', margin.left + plotW / 2);
+      xLabel.setAttribute('y', height - 4);
+      xLabel.setAttribute('text-anchor', 'middle');
+      xLabel.setAttribute('font-size', '12');
+      xLabel.setAttribute('fill', '#555');
+      xLabel.textContent = xOpt.label;
+      svg.appendChild(xLabel);
+
+      const yLabel = document.createElementNS(ns, 'text');
+      yLabel.setAttribute('x', 14);
+      yLabel.setAttribute('y', margin.top + plotH / 2);
+      yLabel.setAttribute('text-anchor', 'middle');
+      yLabel.setAttribute('font-size', '12');
+      yLabel.setAttribute('fill', '#555');
+      yLabel.setAttribute('transform', 'rotate(-90, 14, ' + (margin.top + plotH / 2) + ')');
+      yLabel.textContent = yOpt.label;
+      svg.appendChild(yLabel);
+
+      // Data points
+      const tooltip = document.getElementById('tooltip');
+      for (const p of points) {
+        const dot = document.createElementNS(ns, 'circle');
+        dot.setAttribute('cx', sx(p.x));
+        dot.setAttribute('cy', sy(p.y));
+        dot.setAttribute('r', '5');
+        dot.setAttribute('fill', BIN_COLORS[p.bin]);
+        dot.setAttribute('opacity', '0.7');
+        dot.setAttribute('stroke', 'white');
+        dot.setAttribute('stroke-width', '1');
+        dot.style.cursor = 'pointer';
+        dot.addEventListener('mouseenter', e => {
+          tooltip.style.display = 'block';
+          tooltip.style.left = (e.clientX + 12) + 'px';
+          tooltip.style.top = (e.clientY - 10) + 'px';
+          tooltip.innerHTML = '<strong>' + p.r.grayBookName + '</strong>'
+            + xOpt.label + ': ' + xOpt.fmt(p.x) + '<br>'
+            + yOpt.label + ': ' + yOpt.fmt(p.y) + '<br>'
+            + '<span style="color:#888">' + ENROLLMENT_BINS[p.bin].label + '</span>';
+        });
+        dot.addEventListener('mousemove', e => {
+          tooltip.style.left = (e.clientX + 12) + 'px';
+          tooltip.style.top = (e.clientY - 10) + 'px';
+        });
+        dot.addEventListener('mouseleave', () => {
+          tooltip.style.display = 'none';
+        });
+        svg.appendChild(dot);
+      }
+
+      // Bin legend (compact, bottom-right)
+      const usedBins = [...new Set(points.map(p => p.bin))].sort();
+      usedBins.forEach((bi, i) => {
+        const lx = sx(xMax) - 10;
+        const ly = margin.top + 6 + i * 16;
+        const swatch = document.createElementNS(ns, 'circle');
+        swatch.setAttribute('cx', lx - 4);
+        swatch.setAttribute('cy', ly);
+        swatch.setAttribute('r', '4');
+        swatch.setAttribute('fill', BIN_COLORS[bi]);
+        swatch.setAttribute('opacity', '0.7');
+        svg.appendChild(swatch);
+        const lt = document.createElementNS(ns, 'text');
+        lt.setAttribute('x', lx - 12);
+        lt.setAttribute('y', ly + 4);
+        lt.setAttribute('text-anchor', 'end');
+        lt.setAttribute('font-size', '10');
+        lt.setAttribute('fill', '#888');
+        lt.textContent = ENROLLMENT_BINS[bi].label;
+        svg.appendChild(lt);
+      });
     }
 
     function renderExcluded() {
@@ -470,13 +767,32 @@ export function generateReport(results: DepartmentAnalysis[]) {
       const aggResearch = d.reduce((s, r) => s + computeResearchSpend(r), 0);
       document.getElementById('totalTeachingSpend').textContent = fmt$(aggTeaching);
       document.getElementById('totalResearchSpend').textContent = fmt$(aggResearch);
+
+      const perStudentVals = d.filter(r => r.uniqueStudents > 0).map(r => computeSpend(r) / r.uniqueStudents);
+      document.getElementById('medianPerStudent').textContent = fmt$(median(perStudentVals));
+      document.getElementById('meanPerStudent').textContent = fmt$(mean(perStudentVals));
     }
 
     function render() {
-      renderChart();
       renderTable();
+      renderChart();
       updateSummaryCards();
       renderExcluded();
+    }
+
+    // Populate scatter dropdowns
+    function initScatterDropdowns() {
+      const xSel = document.getElementById('scatterX');
+      const ySel = document.getElementById('scatterY');
+      for (const opt of AXIS_OPTIONS) {
+        xSel.add(new Option(opt.label, opt.key));
+        ySel.add(new Option(opt.label, opt.key));
+      }
+      xSel.value = currentXAxis;
+      ySel.value = currentYAxis;
+
+      xSel.addEventListener('change', e => { currentXAxis = e.target.value; renderChart(); });
+      ySel.addEventListener('change', e => { currentYAxis = e.target.value; renderChart(); });
     }
 
     // Search
@@ -493,6 +809,12 @@ export function generateReport(results: DepartmentAnalysis[]) {
     document.getElementById('minFaculty').addEventListener('input', e => {
       minFaculty = parseInt(e.target.value) || 0;
       render();
+    });
+
+    // Bin toggle
+    document.getElementById('binToggle').addEventListener('change', e => {
+      binsEnabled = e.target.checked;
+      renderTable();
     });
 
     // Sliders
@@ -534,6 +856,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
       });
     });
 
+    initScatterDropdowns();
     render();
   </script>
 </body>
