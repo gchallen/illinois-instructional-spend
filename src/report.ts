@@ -116,6 +116,16 @@ export function generateReport(results: DepartmentAnalysis[]) {
     .methodology h2 { font-size: 1.1rem; color: #333; margin-bottom: 12px; }
     .methodology ul { margin: 8px 0 8px 20px; }
     .methodology li { margin-bottom: 4px; }
+
+    .insights-section { background: white; border-radius: 8px; padding: 24px 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px; }
+    .insights-section h2 { font-size: 1.2rem; color: #333; margin-bottom: 20px; }
+    .insight-panel { margin-bottom: 28px; }
+    .insight-panel:last-of-type { margin-bottom: 12px; }
+    .insight-panel h3 { font-size: 1.05rem; color: #1a1a1a; margin-bottom: 2px; font-weight: 700; }
+    .insight-panel .insight-takeaway { font-size: 0.95rem; color: #444; margin-bottom: 10px; line-height: 1.5; }
+    .insight-panel .insight-takeaway strong { color: #2563eb; }
+    .insight-panel .insight-legend { font-size: 0.75rem; color: #999; margin-bottom: 6px; }
+    .insight-summary { font-size: 0.88rem; color: #444; line-height: 1.6; margin-top: 8px; padding-top: 14px; border-top: 1px solid #e5e7eb; }
   </style>
 </head>
 <body>
@@ -164,6 +174,8 @@ export function generateReport(results: DepartmentAnalysis[]) {
       <button class="active" data-metric="perStudent">$/Student</button>
       <button data-metric="perCreditHour">$/Credit Hr</button>
       <button data-metric="instructionalSpend">Total Spend</button>
+      <button data-metric="perCourse">$/Course</button>
+      <button data-metric="facultyStudentRatio">Faculty:Student</button>
     </div>
 
     <label><input type="checkbox" id="binToggle" checked> Group by enrollment</label>
@@ -188,6 +200,33 @@ export function generateReport(results: DepartmentAnalysis[]) {
     </div>
   </div>
 
+  <div class="insights-section" id="insightsSection">
+    <h2>Insights</h2>
+
+    <div class="insight-panel">
+      <h3>Economies of Scale: $/Student Drops 10x with Enrollment</h3>
+      <p class="insight-takeaway">Departments with <strong>5,000+ students</strong> spend a median of ~<strong>$600/student</strong>. Departments under 100 students spend ~<strong>$5,400/student</strong>. But within every tier, there&rsquo;s a <strong>6&ndash;18x spread</strong> &mdash; size isn&rsquo;t the whole story.</p>
+      <p class="insight-legend">Log scale. Each dot = one department. Vertical line = median, triangle = mean.</p>
+      <svg id="stripPerStudent"></svg>
+    </div>
+
+    <div class="insight-panel">
+      <h3>$/Course Tells a Different Story</h3>
+      <p class="insight-takeaway">Dividing the same teaching spend by <strong>courses instead of students</strong> reshuffles the rankings. Large-lecture departments that look cheap per student (e.g. Accountancy at $907/student) become expensive per course ($103k). Small-seminar departments do the opposite.</p>
+      <p class="insight-legend">Log scale. Same bins, same departments, different denominator.</p>
+      <svg id="stripPerCourse"></svg>
+    </div>
+
+    <div class="insight-panel">
+      <h3>Who Isn&rsquo;t Teaching?</h3>
+      <p class="insight-takeaway">Between <strong>0% and 73%</strong> of a department&rsquo;s Grey Book faculty are not matched to any CIS course section. Unmatched faculty salary is classified entirely as <strong>research spend</strong>. This is the single biggest driver of the teaching/research split.</p>
+      <p class="insight-legend">Linear scale (0&ndash;100%). Same bins as above.</p>
+      <svg id="stripNotTeaching"></svg>
+    </div>
+
+    <p class="insight-summary" id="insightSummary"></p>
+  </div>
+
   <div class="table-wrap">
   <table id="dataTable">
     <thead>
@@ -206,7 +245,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
   </table>
   </div>
 
-  <details class="chart-section" open>
+  <details class="chart-section">
     <summary>Scatter Plot</summary>
     <div class="chart-container">
       <div class="scatter-controls">
@@ -244,7 +283,8 @@ export function generateReport(results: DepartmentAnalysis[]) {
       <li><strong>Approach:</strong> For each Grey Book department, every faculty member is searched against the entire CIS course catalog by name (last name + first initial). Matched faculty&rsquo;s course sections determine enrollment. This means a department&rsquo;s courses are discovered automatically across all CIS subject codes&mdash;no manual department mapping required.</li>
       <li><strong>Faculty categories:</strong> Teaching-focused = lecturers, instructors, clinical faculty. Research-focused = tenure-track professors, research professors. Faculty with &ldquo;other&rdquo; titles (e.g., administrative) are excluded from instructional spend.</li>
       <li><strong>Salary &amp; FTE:</strong> Teaching spend uses only <strong>matched</strong> faculty (those found teaching in CIS). Unmatched non-admin faculty salary is classified entirely as research spend. The Grey Book already prorates salary by FTE. Only faculty-class positions (AA/AB/AL/AM) are summed; administrative stipends (BA/BC) and zero-FTE endowed chair supplements are excluded.</li>
-      <li><strong>Enrollment:</strong> Unique students across all sections taught by matched faculty, regardless of CIS subject code. A student enrolled in multiple sections is counted once per department.</li>
+      <li><strong>Section filtering:</strong> Independent Study sections (CIS type code &ldquo;IND&rdquo;) are excluded before faculty matching. These are typically thesis supervision or individual research &mdash; not classroom instruction. Faculty who only appear in IND sections are not counted as teaching.</li>
+      <li><strong>Enrollment:</strong> Unique students across all non-excluded sections taught by matched faculty, regardless of CIS subject code. A student enrolled in multiple sections is counted once per department.</li>
       <li><strong>Credit hours:</strong> Counted per course (not per section). A 3-credit course with 4 sections counts as 3 credit hours, not 12.</li>
     </ul>
 
@@ -285,10 +325,13 @@ export function generateReport(results: DepartmentAnalysis[]) {
       { key: 'matchRate', label: 'Match Rate', get: r => r.matchRate, fmt: n => (n * 100).toFixed(0) + '%' },
       { key: 'courseCount', label: 'Courses', get: r => r.courseCount, fmt: n => String(n) },
       { key: 'totalProposedSalary', label: 'Faculty Salary', get: r => r.totalProposedSalary, fmt: fmt$ },
-      { key: 'computed_metric', label: 'Current Metric ($/Student or $/Cr Hr)', get: r => computeMetric(r), fmt: fmt$ },
+      { key: 'computed_metric', label: 'Current Metric', get: r => computeMetric(r), fmt: n => fmtCurrentMetric(n) },
       { key: 'computedSpend', label: 'Teaching Spend', get: r => computeSpend(r), fmt: fmt$ },
       { key: 'computedResearch', label: 'Research Spend', get: r => computeResearchSpend(r), fmt: fmt$ },
       { key: 'computedTeachingPct', label: 'Teaching %', get: r => computeTeachingPct(r), fmt: fmtPct },
+      { key: 'perCourse', label: '$/Course', get: r => r.courseCount > 0 ? computeSpend(r) / r.courseCount : 0, fmt: fmt$ },
+      { key: 'facultyStudentRatio', label: 'Faculty:Student Ratio', get: r => r.uniqueStudents > 0 ? r.matchedFaculty / r.uniqueStudents : 0, fmt: n => n > 0 ? '1:' + Math.round(1 / n) : '0' },
+      { key: 'notTeachingPct', label: '% Not Teaching', get: r => 1 - r.matchRate, fmt: fmtPct },
     ];
 
     let currentMetric = 'perStudent';
@@ -326,6 +369,8 @@ export function generateReport(results: DepartmentAnalysis[]) {
       const spend = computeSpend(r);
       if (currentMetric === 'perStudent') return r.uniqueStudents > 0 ? spend / r.uniqueStudents : 0;
       if (currentMetric === 'perCreditHour') return r.totalCreditHours > 0 ? spend / r.totalCreditHours : 0;
+      if (currentMetric === 'perCourse') return r.courseCount > 0 ? spend / r.courseCount : 0;
+      if (currentMetric === 'facultyStudentRatio') return r.uniqueStudents > 0 ? r.matchedFaculty / r.uniqueStudents : 0;
       return spend;
     }
 
@@ -337,6 +382,13 @@ export function generateReport(results: DepartmentAnalysis[]) {
 
     function fmt$(n) { return '$' + Math.round(n).toLocaleString(); }
     function fmtPct(n) { return (n * 100).toFixed(0) + '%'; }
+
+    function fmtCurrentMetric(v) {
+      if (currentMetric === 'facultyStudentRatio') {
+        return v > 0 ? '1:' + Math.round(1 / v) : '0';
+      }
+      return fmt$(v);
+    }
 
     function median(arr) {
       if (!arr.length) return 0;
@@ -352,6 +404,8 @@ export function generateReport(results: DepartmentAnalysis[]) {
     function metricLabel() {
       if (currentMetric === 'perStudent') return '$/Student';
       if (currentMetric === 'perCreditHour') return '$/Credit Hour';
+      if (currentMetric === 'perCourse') return '$/Course';
+      if (currentMetric === 'facultyStudentRatio') return 'Faculty per Student';
       return 'Total Spend';
     }
 
@@ -392,7 +446,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
       document.getElementById('deptCount').textContent = d.length + ' depts';
       document.getElementById('studentCount').textContent = d.reduce((s, r) => s + r.uniqueStudents, 0).toLocaleString() + ' students';
 
-      const prefix = currentMetric === 'perStudent' ? '$/Student' : currentMetric === 'perCreditHour' ? '$/Credit Hr' : 'Total Spend';
+      const prefix = currentMetric === 'perStudent' ? '$/Student' : currentMetric === 'perCreditHour' ? '$/Credit Hr' : currentMetric === 'perCourse' ? '$/Course' : currentMetric === 'facultyStudentRatio' ? 'Faculty:Student' : 'Total Spend';
       document.querySelector('th[data-key="computed_spend"]').firstChild.textContent = prefix + ' ';
 
       document.querySelectorAll('#dataTable th').forEach(th => {
@@ -435,8 +489,8 @@ export function generateReport(results: DepartmentAnalysis[]) {
         hdr.classList.add('bin-header');
         hdr.innerHTML = \`
           <td colspan="4"><span style="font-size:0.75rem;margin-right:6px">\${collapsed ? '\\u25B6' : '\\u25BC'}</span>\${bin.label} <span style="font-weight:400;color:#666">(\${bin.departments.length} depts, \${totalStu.toLocaleString()} students)</span></td>
-          <td class="right" colspan="2" style="font-weight:400;color:#666">Median \${metricLabel()}: \${fmt$(med)}</td>
-          <td class="right" colspan="2" style="font-weight:400;color:#666">Mean: \${fmt$(avg)}</td>
+          <td class="right" colspan="2" style="font-weight:400;color:#666">Median \${metricLabel()}: \${fmtCurrentMetric(med)}</td>
+          <td class="right" colspan="2" style="font-weight:400;color:#666">Mean: \${fmtCurrentMetric(avg)}</td>
         \`;
         hdr.addEventListener('click', () => {
           if (collapsedBins.has(bin.index)) collapsedBins.delete(bin.index);
@@ -469,7 +523,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
         <td class="right">\${r.uniqueStudents.toLocaleString()}</td>
         <td class="right">\${r.courseCount}</td>
         <td class="right">\${fmt$(r.totalProposedSalary)}</td>
-        <td class="right">\${fmt$(computeMetric(r))}</td>
+        <td class="right">\${fmtCurrentMetric(computeMetric(r))}</td>
         <td class="right">\${fmtPct(computeTeachingPct(r))}</td>
       \`;
       tr.addEventListener('click', () => toggleDetail(r.grayBookId));
@@ -739,6 +793,188 @@ export function generateReport(results: DepartmentAnalysis[]) {
       });
     }
 
+    function renderInsights() {
+      renderBinnedStrip('stripPerStudent',
+        function(r) { return r.uniqueStudents > 0 ? computeSpend(r) / r.uniqueStudents : 0; },
+        fmt$, '$/Student', true);
+      renderBinnedStrip('stripPerCourse',
+        function(r) { return r.courseCount > 0 ? computeSpend(r) / r.courseCount : 0; },
+        fmt$, '$/Course', true);
+      renderBinnedStrip('stripNotTeaching',
+        function(r) { return 1 - r.matchRate; },
+        fmtPct, '% Not Teaching', false);
+      renderInsightSummary();
+    }
+
+    function renderBinnedStrip(svgId, valueFn, fmtFn, axisLabel, useLog) {
+      const ns = 'http://www.w3.org/2000/svg';
+      const d = filteredData();
+      const svg = document.getElementById(svgId);
+      svg.innerHTML = '';
+
+      const bins = ENROLLMENT_BINS.map((bin, i) => ({
+        ...bin,
+        index: i,
+        departments: d.filter(r => r.uniqueStudents >= bin.min && r.uniqueStudents < bin.max),
+      })).filter(g => g.departments.length > 0).reverse();
+
+      if (bins.length === 0) return;
+
+      const margin = { top: 8, right: 20, bottom: 32, left: 150 };
+      const rowHeight = 36;
+      const width = 700;
+      const height = margin.top + bins.length * rowHeight + margin.bottom;
+      const plotW = width - margin.left - margin.right;
+
+      svg.setAttribute('width', width);
+      svg.setAttribute('height', height);
+      svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+      svg.style.width = '100%';
+      svg.style.maxWidth = width + 'px';
+
+      const allValues = d.map(r => valueFn(r));
+      const positiveValues = allValues.filter(v => v > 0);
+      if (useLog && positiveValues.length === 0) return;
+
+      var sx, ticks;
+      if (useLog) {
+        var logMin = Math.floor(Math.log10(Math.min(...positiveValues)));
+        var logMax = Math.ceil(Math.log10(Math.max(...positiveValues)));
+        if (logMin === logMax) logMax = logMin + 1;
+        sx = function(v) {
+          if (v <= 0) return margin.left;
+          return margin.left + Math.max(0, Math.min(1, (Math.log10(v) - logMin) / (logMax - logMin))) * plotW;
+        };
+        ticks = [];
+        for (var p = logMin; p <= logMax; p++) ticks.push(Math.pow(10, p));
+      } else {
+        var maxVal = Math.max(...allValues);
+        if (maxVal <= 1.01) maxVal = 1;
+        else maxVal = niceMax(maxVal);
+        sx = function(v) {
+          return margin.left + Math.max(0, Math.min(1, v / maxVal)) * plotW;
+        };
+        if (maxVal <= 1) {
+          ticks = [0, 0.25, 0.5, 0.75, 1.0];
+        } else {
+          ticks = niceTicks(maxVal, 4);
+        }
+      }
+
+      for (var ti = 0; ti < ticks.length; ti++) {
+        var v = ticks[ti];
+        var grid = document.createElementNS(ns, 'line');
+        grid.setAttribute('x1', sx(v)); grid.setAttribute('x2', sx(v));
+        grid.setAttribute('y1', margin.top); grid.setAttribute('y2', margin.top + bins.length * rowHeight);
+        grid.setAttribute('stroke', '#ddd'); grid.setAttribute('stroke-width', '1');
+        svg.appendChild(grid);
+        var label = document.createElementNS(ns, 'text');
+        label.setAttribute('x', sx(v));
+        label.setAttribute('y', margin.top + bins.length * rowHeight + 16);
+        label.setAttribute('text-anchor', 'middle');
+        label.setAttribute('font-size', '10');
+        label.setAttribute('fill', '#888');
+        label.textContent = fmtFn(v);
+        svg.appendChild(label);
+      }
+
+      const xLabel = document.createElementNS(ns, 'text');
+      xLabel.setAttribute('x', margin.left + plotW / 2);
+      xLabel.setAttribute('y', height - 2);
+      xLabel.setAttribute('text-anchor', 'middle');
+      xLabel.setAttribute('font-size', '10');
+      xLabel.setAttribute('fill', '#666');
+      xLabel.textContent = axisLabel;
+      svg.appendChild(xLabel);
+
+      const tooltip = document.getElementById('tooltip');
+      bins.forEach(function(bin, i) {
+        const y = margin.top + i * rowHeight + rowHeight / 2;
+        const depts = bin.departments;
+        const values = depts.map(r => valueFn(r));
+        const med = median(values);
+        const avg = mean(values);
+
+        if (i % 2 === 0) {
+          const bg = document.createElementNS(ns, 'rect');
+          bg.setAttribute('x', '0'); bg.setAttribute('y', margin.top + i * rowHeight);
+          bg.setAttribute('width', width); bg.setAttribute('height', rowHeight);
+          bg.setAttribute('fill', '#f8f9fa');
+          svg.appendChild(bg);
+        }
+
+        const lbl = document.createElementNS(ns, 'text');
+        lbl.setAttribute('x', margin.left - 6);
+        lbl.setAttribute('y', y + 4);
+        lbl.setAttribute('text-anchor', 'end');
+        lbl.setAttribute('font-size', '11');
+        lbl.setAttribute('fill', '#555');
+        lbl.textContent = bin.label + ' (' + depts.length + ')';
+        svg.appendChild(lbl);
+
+        depts.forEach(function(r, j) {
+          const v = valueFn(r);
+          const yOff = ((j % 3) - 1) * 5;
+          const dot = document.createElementNS(ns, 'circle');
+          dot.setAttribute('cx', sx(v));
+          dot.setAttribute('cy', y + yOff);
+          dot.setAttribute('r', '4');
+          dot.setAttribute('fill', BIN_COLORS[bin.index]);
+          dot.setAttribute('opacity', '0.6');
+          dot.style.cursor = 'pointer';
+          dot.addEventListener('mouseenter', function(e) {
+            tooltip.style.display = 'block';
+            tooltip.style.left = (e.clientX + 12) + 'px';
+            tooltip.style.top = (e.clientY - 10) + 'px';
+            tooltip.innerHTML = '<strong>' + r.grayBookName + '</strong>' + axisLabel + ': ' + fmtFn(v);
+          });
+          dot.addEventListener('mousemove', function(e) {
+            tooltip.style.left = (e.clientX + 12) + 'px';
+            tooltip.style.top = (e.clientY - 10) + 'px';
+          });
+          dot.addEventListener('mouseleave', function() { tooltip.style.display = 'none'; });
+          svg.appendChild(dot);
+        });
+
+        const medLine = document.createElementNS(ns, 'line');
+        medLine.setAttribute('x1', sx(med)); medLine.setAttribute('x2', sx(med));
+        medLine.setAttribute('y1', y - 13); medLine.setAttribute('y2', y + 13);
+        medLine.setAttribute('stroke', '#333'); medLine.setAttribute('stroke-width', '2');
+        svg.appendChild(medLine);
+
+        const tri = document.createElementNS(ns, 'polygon');
+        const tx = sx(avg);
+        tri.setAttribute('points', (tx - 4) + ',' + (y + 14) + ' ' + (tx + 4) + ',' + (y + 14) + ' ' + tx + ',' + (y + 8));
+        tri.setAttribute('fill', '#333');
+        svg.appendChild(tri);
+      });
+    }
+
+    function renderInsightSummary() {
+      const d = filteredData();
+      const el = document.getElementById('insightSummary');
+
+      const perStudentVals = d.filter(r => r.uniqueStudents > 0).map(r => computeSpend(r) / r.uniqueStudents);
+      const med = median(perStudentVals);
+      const avg = mean(perStudentVals);
+
+      const ratios = d.filter(r => r.uniqueStudents > 0 && r.matchedFaculty > 0).map(r => ({
+        ratio: r.matchedFaculty / r.uniqueStudents,
+        name: r.grayBookName,
+        inverse: Math.round(r.uniqueStudents / r.matchedFaculty),
+      }));
+      ratios.sort(function(a, b) { return b.ratio - a.ratio; });
+
+      const notTeachingHigh = d.filter(r => r.matchRate < 0.5);
+
+      var text = 'Median instructional spend: <strong>' + fmt$(med) + '/student</strong> (mean: ' + fmt$(avg) + '). ';
+      if (ratios.length >= 2) {
+        text += 'Instructor:student ratio ranges from <strong>1:' + ratios[0].inverse + '</strong> (' + ratios[0].name + ') to <strong>1:' + ratios[ratios.length - 1].inverse + '</strong> (' + ratios[ratios.length - 1].name + '). ';
+      }
+      text += '<strong>' + notTeachingHigh.length + '</strong> department' + (notTeachingHigh.length !== 1 ? 's' : '') + ' ha' + (notTeachingHigh.length !== 1 ? 've' : 's') + ' more than half their faculty not teaching any courses.';
+      el.innerHTML = text;
+    }
+
     function renderExcluded() {
       const section = document.getElementById('excludedSection');
       const tbody = document.getElementById('excludedBody');
@@ -776,6 +1012,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
     function render() {
       renderTable();
       renderChart();
+      renderInsights();
       updateSummaryCards();
       renderExcluded();
     }
