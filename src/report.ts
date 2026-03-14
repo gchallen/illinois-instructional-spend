@@ -31,6 +31,9 @@ export function generateReport(results: DepartmentAnalysis[]) {
   const totalResearchSalary = sorted.reduce((s, r) => s + r.totalResearchFocusedSalary, 0)
   const totalStudents = sorted.reduce((s, r) => s + r.uniqueStudents, 0)
   const totalSalary = sorted.reduce((s, r) => s + r.totalProposedSalary, 0)
+  const totalMatchedTeachingSalary = sorted.reduce((s, r) => s + r.matchedTeachingFocusedSalary, 0)
+  const totalMatchedResearchSalary = sorted.reduce((s, r) => s + r.matchedResearchFocusedSalary, 0)
+  const totalUnmatchedNonAdmin = sorted.reduce((s, r) => s + r.unmatchedNonAdminSalary, 0)
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -103,16 +106,16 @@ export function generateReport(results: DepartmentAnalysis[]) {
 
   <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:16px">
     <div style="background:white;border-radius:8px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;min-width:180px">
-      <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Teaching-Focused Salary</div>
-      <div style="font-size:1.3rem;font-weight:700;color:#2563eb">$${Math.round(totalTeachingSalary).toLocaleString()}</div>
+      <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Teaching Spend</div>
+      <div style="font-size:1.3rem;font-weight:700;color:#2563eb" id="totalTeachingSpend"></div>
     </div>
     <div style="background:white;border-radius:8px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;min-width:180px">
-      <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Research-Focused Salary</div>
-      <div style="font-size:1.3rem;font-weight:700;color:#7c3aed">$${Math.round(totalResearchSalary).toLocaleString()}</div>
+      <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Research Spend</div>
+      <div style="font-size:1.3rem;font-weight:700;color:#7c3aed" id="totalResearchSpend"></div>
     </div>
     <div style="background:white;border-radius:8px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;min-width:180px">
-      <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Total Faculty Salary</div>
-      <div style="font-size:1.3rem;font-weight:700;color:#333">$${Math.round(totalSalary).toLocaleString()}</div>
+      <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Non-Admin Faculty Salary</div>
+      <div style="font-size:1.3rem;font-weight:700;color:#333">$${Math.round(totalTeachingSalary + totalResearchSalary).toLocaleString()}</div>
     </div>
     <div style="background:white;border-radius:8px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;min-width:180px">
       <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Total Students</div>
@@ -174,6 +177,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
         <th data-key="courseCount" data-type="number" class="right">Courses <span class="sort-arrow">▾</span></th>
         <th data-key="totalProposedSalary" data-type="number" class="right">Faculty Salary <span class="sort-arrow">▾</span></th>
         <th data-key="computed_spend" data-type="number" class="right sorted">Spend <span class="sort-arrow">▾</span></th>
+        <th data-key="computed_teaching_pct" data-type="number" class="right">Teaching % <span class="sort-arrow">▾</span></th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -183,7 +187,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
   <div class="note">
     Teaching-focused faculty: lecturers, instructors, clinical. Research-focused: tenure-track and research professors.<br>
     Instructional % = estimated share of salary devoted to teaching (adjust with sliders above).<br>
-    Instructional spend uses <strong>all</strong> Grey Book faculty salary for the department. Enrollment is counted across all CIS subjects where matched faculty teach.<br>
+    Teaching spend uses only <strong>matched</strong> faculty salary. Unmatched non-admin faculty salary is classified as research spend. Enrollment is counted across all CIS subjects where matched faculty teach.<br>
     Click any row to expand details. Click column headers to sort.<br>
     Generated ${new Date().toISOString().slice(0, 10)}.
   </div>
@@ -202,7 +206,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
     <ul>
       <li><strong>Approach:</strong> For each Grey Book department, every faculty member is searched against the entire CIS course catalog by name (last name + first initial). Matched faculty&rsquo;s course sections determine enrollment. This means a department&rsquo;s courses are discovered automatically across all CIS subject codes&mdash;no manual department mapping required.</li>
       <li><strong>Faculty categories:</strong> Teaching-focused = lecturers, instructors, clinical faculty. Research-focused = tenure-track professors, research professors. Faculty with &ldquo;other&rdquo; titles (e.g., administrative) are excluded from instructional spend.</li>
-      <li><strong>Salary &amp; FTE:</strong> Instructional spend uses <strong>all</strong> Grey Book faculty salary for the department, not just those teaching this semester. The Grey Book already prorates salary by FTE. Only faculty-class positions (AA/AB/AL/AM) are summed; administrative stipends (BA/BC) and zero-FTE endowed chair supplements are excluded.</li>
+      <li><strong>Salary &amp; FTE:</strong> Teaching spend uses only <strong>matched</strong> faculty (those found teaching in CIS). Unmatched non-admin faculty salary is classified entirely as research spend. The Grey Book already prorates salary by FTE. Only faculty-class positions (AA/AB/AL/AM) are summed; administrative stipends (BA/BC) and zero-FTE endowed chair supplements are excluded.</li>
       <li><strong>Enrollment:</strong> Unique students across all sections taught by matched faculty, regardless of CIS subject code. A student enrolled in multiple sections is counted once per department.</li>
       <li><strong>Credit hours:</strong> Counted per course (not per section). A 3-credit course with 4 sections counts as 3 credit hours, not 12.</li>
     </ul>
@@ -239,7 +243,20 @@ export function generateReport(results: DepartmentAnalysis[]) {
     let chart = null;
 
     function computeSpend(r) {
-      return r.totalTeachingFocusedSalary * teachingPct + r.totalResearchFocusedSalary * researchPct;
+      return r.matchedTeachingFocusedSalary * teachingPct + r.matchedResearchFocusedSalary * researchPct;
+    }
+
+    function computeResearchSpend(r) {
+      return r.matchedTeachingFocusedSalary * (1 - teachingPct)
+           + r.matchedResearchFocusedSalary * (1 - researchPct)
+           + r.unmatchedNonAdminSalary;
+    }
+
+    function computeTeachingPct(r) {
+      const t = computeSpend(r);
+      const res = computeResearchSpend(r);
+      const total = t + res;
+      return total > 0 ? t / total : 0;
     }
 
     function computeMetric(r) {
@@ -251,6 +268,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
 
     function getSortValue(r, key) {
       if (key === 'computed_spend') return computeMetric(r);
+      if (key === 'computed_teaching_pct') return computeTeachingPct(r);
       return r[key] ?? '';
     }
 
@@ -356,6 +374,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
           <td class="right">\${r.courseCount}</td>
           <td class="right">\${fmt$(r.totalProposedSalary)}</td>
           <td class="right">\${fmt$(computeMetric(r))}</td>
+          <td class="right">\${fmtPct(computeTeachingPct(r))}</td>
         \`;
         tr.addEventListener('click', () => toggleDetail(r.grayBookId));
         tbody.appendChild(tr);
@@ -363,16 +382,20 @@ export function generateReport(results: DepartmentAnalysis[]) {
         if (r.grayBookId === expandedId) {
           const detailTr = document.createElement('tr');
           detailTr.classList.add('detail-row');
-          detailTr.innerHTML = \`<td colspan="7">\${renderDetail(r)}</td>\`;
+          detailTr.innerHTML = \`<td colspan="8">\${renderDetail(r)}</td>\`;
           tbody.appendChild(detailTr);
         }
       }
     }
 
     function renderDetail(r) {
-      const spend = computeSpend(r);
-      const perStu = r.uniqueStudents > 0 ? spend / r.uniqueStudents : 0;
-      const perCH = r.totalCreditHours > 0 ? spend / r.totalCreditHours : 0;
+      const tSpend = computeSpend(r);
+      const rSpend = computeResearchSpend(r);
+      const nonAdminSalary = r.totalTeachingFocusedSalary + r.totalResearchFocusedSalary;
+      const tPct = nonAdminSalary > 0 ? tSpend / nonAdminSalary : 0;
+      const rPct = nonAdminSalary > 0 ? rSpend / nonAdminSalary : 0;
+      const perStu = r.uniqueStudents > 0 ? tSpend / r.uniqueStudents : 0;
+      const perCH = r.totalCreditHours > 0 ? tSpend / r.totalCreditHours : 0;
       return \`<div class="detail-content">
         <div class="detail-section">
           <h4>Faculty</h4>
@@ -384,12 +407,14 @@ export function generateReport(results: DepartmentAnalysis[]) {
           </dl>
         </div>
         <div class="detail-section">
-          <h4>Salary</h4>
+          <h4>Salary Breakdown</h4>
           <dl>
-            <dt>Total faculty salary</dt><dd>\${fmt$(r.totalProposedSalary)}</dd>
-            <dt>Teaching-focused salary</dt><dd>\${fmt$(r.totalTeachingFocusedSalary)}</dd>
-            <dt>Research-focused salary</dt><dd>\${fmt$(r.totalResearchFocusedSalary)}</dd>
-            <dt>Instructional spend</dt><dd>\${fmt$(spend)}</dd>
+            <dt>Teaching spend</dt><dd>\${fmt$(tSpend)} (\${fmtPct(tPct)})</dd>
+            <dt>Research spend</dt><dd>\${fmt$(rSpend)} (\${fmtPct(rPct)})</dd>
+            <dt style="border-top:1px solid #ddd;padding-top:4px;margin-top:4px">Non-admin faculty salary</dt><dd style="border-top:1px solid #ddd;padding-top:4px;margin-top:4px">\${fmt$(nonAdminSalary)}</dd>
+            <dt style="margin-top:8px">Matched teaching-focused</dt><dd>\${fmt$(r.matchedTeachingFocusedSalary)}</dd>
+            <dt>Matched research-focused</dt><dd>\${fmt$(r.matchedResearchFocusedSalary)}</dd>
+            <dt>Unmatched non-admin</dt><dd>\${fmt$(r.unmatchedNonAdminSalary)}</dd>
           </dl>
         </div>
         <div class="detail-section">
@@ -439,9 +464,18 @@ export function generateReport(results: DepartmentAnalysis[]) {
       }
     }
 
+    function updateSummaryCards() {
+      const d = filteredData();
+      const aggTeaching = d.reduce((s, r) => s + computeSpend(r), 0);
+      const aggResearch = d.reduce((s, r) => s + computeResearchSpend(r), 0);
+      document.getElementById('totalTeachingSpend').textContent = fmt$(aggTeaching);
+      document.getElementById('totalResearchSpend').textContent = fmt$(aggResearch);
+    }
+
     function render() {
       renderChart();
       renderTable();
+      updateSummaryCards();
       renderExcluded();
     }
 

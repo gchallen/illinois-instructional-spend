@@ -44,7 +44,12 @@ export interface DepartmentAnalysis {
   totalTeachingFocusedSalary: number
   totalResearchFocusedSalary: number
 
-  // Instructional spend (at default 70/30, using ALL Grey Book faculty)
+  // Matched vs unmatched salary breakdown (for teaching/research spend decomposition)
+  matchedTeachingFocusedSalary: number
+  matchedResearchFocusedSalary: number
+  unmatchedNonAdminSalary: number
+
+  // Instructional spend (at default 70/30, using matched faculty only)
   instructionalSpend: number
 
   // Enrollment (across all matched sections, all subjects)
@@ -95,10 +100,29 @@ export function analyzeDepartment(
     }
   }
 
-  // Instructional spend at default fractions — uses ALL Grey Book faculty
+  // Matched vs unmatched salary breakdown
+  let matchedTeachingFocusedSalary = 0
+  let matchedResearchFocusedSalary = 0
+  let unmatchedNonAdminSalary = 0
+
+  for (const m of matchResult.matched) {
+    if (isTeachingFocused(m.faculty.facultyType)) {
+      matchedTeachingFocusedSalary += m.faculty.totalProposedSalary
+    } else if (isResearchFocused(m.faculty.facultyType)) {
+      matchedResearchFocusedSalary += m.faculty.totalProposedSalary
+    }
+  }
+
+  for (const f of matchResult.unmatchedFaculty) {
+    if (isTeachingFocused(f.facultyType) || isResearchFocused(f.facultyType)) {
+      unmatchedNonAdminSalary += f.totalProposedSalary
+    }
+  }
+
+  // Instructional spend at default fractions — matched faculty only
   const instructionalSpend =
-    totalTeachingFocusedSalary * DEFAULT_TEACHING_PCT +
-    totalResearchFocusedSalary * DEFAULT_RESEARCH_PCT
+    matchedTeachingFocusedSalary * DEFAULT_TEACHING_PCT +
+    matchedResearchFocusedSalary * DEFAULT_RESEARCH_PCT
 
   const matchRate = totalFaculty > 0 ? matchResult.matched.length / totalFaculty : 0
 
@@ -142,6 +166,9 @@ export function analyzeDepartment(
     researchFocusedCount,
     totalTeachingFocusedSalary,
     totalResearchFocusedSalary,
+    matchedTeachingFocusedSalary,
+    matchedResearchFocusedSalary,
+    unmatchedNonAdminSalary,
     totalProposedSalary,
     matchedProposedSalary,
     instructionalSpend,
