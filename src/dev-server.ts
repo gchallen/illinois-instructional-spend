@@ -1,13 +1,13 @@
 import { readFileSync, watch, existsSync } from "fs"
 import { resolve } from "path"
 import type { DepartmentAnalysis } from "./analysis"
-import { generateReport } from "./report"
 
 const PORT = 3456
 const SRC_DIR = resolve(import.meta.dir)
 const OUTPUT_DIR = resolve(import.meta.dir, "../output")
 const REPORT_FILE = resolve(OUTPUT_DIR, "report.html")
 const RESULTS_FILE = resolve(OUTPUT_DIR, "results.json")
+const REPORT_MODULE = resolve(SRC_DIR, "report.ts")
 
 // Track SSE clients for live reload
 const clients = new Set<ReadableStreamDefaultController>()
@@ -22,10 +22,12 @@ function notifyClients() {
   }
 }
 
-function regenerateReport() {
+async function regenerateReport() {
   try {
     const results: DepartmentAnalysis[] = JSON.parse(readFileSync(RESULTS_FILE, "utf-8"))
-    generateReport(results)
+    // Cache-bust the import so Bun re-evaluates the module on each change
+    const mod = await import(REPORT_MODULE + "?t=" + Date.now())
+    mod.generateReport(results)
     console.log(`  Report regenerated (${new Date().toLocaleTimeString()})`)
     notifyClients()
   } catch (e: any) {
@@ -58,6 +60,7 @@ function injectReloadScript(html: string): string {
 
 const server = Bun.serve({
   port: PORT,
+  idleTimeout: 255,
   fetch(req) {
     const url = new URL(req.url)
 
