@@ -20,7 +20,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
   ensureOutputDir()
 
   writeFileSync(resolve(OUTPUT_DIR, "favicon.svg"), FAVICON_SVG)
-  writeFileSync(resolve(OUTPUT_DIR, "results.json"), JSON.stringify(results, null, 2))
+  writeFileSync(resolve(OUTPUT_DIR, "results.json"), JSON.stringify(results.map(({ courseEnrollments, ...rest }) => rest), null, 2))
 
   const included = results.filter((r) => !r.dataQuality.excluded)
   const excluded = results.filter((r) => r.dataQuality.excluded)
@@ -64,8 +64,8 @@ export function generateReport(results: DepartmentAnalysis[]) {
     .slider-group input[type="range"] { width: 100px; }
     .slider-group .slider-val { font-size: 0.85rem; font-weight: 600; min-width: 32px; text-align: right; }
 
-    .table-wrap { overflow-x: auto; margin-bottom: 20px; }
-    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.8rem; }
+    .table-wrap { overflow: auto; max-height: 70vh; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; background: white; font-size: 0.8rem; }
     th { background: #2563eb; color: white; padding: 8px 6px; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; z-index: 2; }
     th:hover { background: #1d4ed8; }
     th .sort-arrow { opacity: 0.5; font-size: 0.7rem; margin-left: 3px; }
@@ -105,7 +105,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
     .note { margin-top: 16px; font-size: 0.8rem; color: #888; text-align: center; line-height: 1.5; }
 
     .warning-badge { display: inline-block; font-size: 0.65rem; padding: 1px 5px; border-radius: 3px; margin-left: 4px; font-weight: 600; vertical-align: middle; }
-    .warning-badge.ldap { background: #ede9fe; color: #5b21b6; }
+    .warning-badge.enroll-err { background: #ede9fe; color: #5b21b6; }
     .warning-badge.collision { background: #e0e7ff; color: #3730a3; }
     .excluded-section { margin-top: 24px; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .excluded-section h2 { font-size: 1.1rem; color: #666; margin-bottom: 12px; }
@@ -114,23 +114,48 @@ export function generateReport(results: DepartmentAnalysis[]) {
     .excluded-table td { padding: 6px 8px; border-bottom: 1px solid #eee; }
     .methodology { margin-top: 24px; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.8rem; color: #555; line-height: 1.6; }
     .methodology h2 { font-size: 1.1rem; color: #333; margin-bottom: 12px; }
-    .methodology ul { margin: 8px 0 8px 20px; }
+    .methodology ul, .methodology ol { margin: 8px 0 8px 20px; }
     .methodology li { margin-bottom: 4px; }
+    .assumption { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 4px 10px; margin: 4px 0; font-size: 0.85rem; color: #92400e; }
 
-    .insights-section { background: white; border-radius: 8px; padding: 24px 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px; }
-    .insights-section h2 { font-size: 1.2rem; color: #333; margin-bottom: 20px; }
+    .insights-section { background: white; border-radius: 8px; padding: 24px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px; }
+    .insights-section h2 { font-size: 1.2rem; color: #333; margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto; padding: 0 28px; }
     .insight-panel { margin-bottom: 28px; }
     .insight-panel:last-of-type { margin-bottom: 12px; }
-    .insight-panel h3 { font-size: 1.05rem; color: #1a1a1a; margin-bottom: 2px; font-weight: 700; }
-    .insight-panel .insight-takeaway { font-size: 0.95rem; color: #444; margin-bottom: 10px; line-height: 1.5; }
+    .insight-panel h3 { font-size: 1.05rem; color: #1a1a1a; margin-bottom: 2px; font-weight: 700; max-width: 800px; margin-left: auto; margin-right: auto; padding: 0 28px; }
+    .insight-panel .insight-takeaway { font-size: 1.05rem; color: #444; margin-bottom: 10px; line-height: 1.5; max-width: 800px; margin-left: auto; margin-right: auto; padding: 0 28px; }
     .insight-panel .insight-takeaway strong { color: #2563eb; }
-    .insight-panel .insight-legend { font-size: 0.75rem; color: #999; margin-bottom: 6px; }
-    .insight-summary { font-size: 0.88rem; color: #444; line-height: 1.6; margin-top: 8px; padding-top: 14px; border-top: 1px solid #e5e7eb; }
+    .insight-panel .insight-legend { font-size: 0.85rem; color: #999; margin-bottom: 6px; max-width: 800px; margin-left: auto; margin-right: auto; padding: 0 28px; }
+    .insight-panel svg { display: block; }
+    .insight-summary { font-size: 1rem; color: #444; line-height: 1.6; margin-top: 8px; padding-top: 14px; border-top: 1px solid #e5e7eb; max-width: 800px; margin-left: auto; margin-right: auto; padding-left: 28px; padding-right: 28px; }
+
+    .parameters-section { background: white; border-radius: 8px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px; max-width: 800px; margin-left: auto; margin-right: auto; }
+    .parameters-section h2 { font-size: 1.1rem; color: #333; margin-bottom: 16px; }
+    .param-row { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid #f0f0f0; }
+    .param-row:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .param-name { font-size: 1.05rem; font-weight: 700; color: #333; margin-bottom: 8px; }
+    .param-control { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .param-control input[type="range"] { flex: 1; }
+    .param-control .slider-val { font-size: 0.85rem; font-weight: 600; min-width: 32px; text-align: right; }
+    .param-desc { font-size: 0.95rem; color: #666; line-height: 1.5; }
+
+    .tab-nav { display: flex; gap: 2px; }
+    .tab-nav a { padding: 10px 24px; font-size: 0.9rem; font-weight: 600; color: #666; text-decoration: none; background: #e5e7eb; border-radius: 8px 8px 0 0; cursor: pointer; }
+    .tab-nav a.active { background: white; color: #2563eb; box-shadow: 0 -1px 3px rgba(0,0,0,0.08); }
+    .tab-content { display: none; border-radius: 0 8px 8px 8px; padding: 16px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px; background: white; }
+    .tab-content.active { display: block; }
+    .tab-content .controls { box-shadow: none; background: #f8f9fa; }
+    .tab-content .table-wrap { box-shadow: none; margin-bottom: 0; }
+
+    .param-summary { font-size: 0.8rem; color: #666; padding: 8px 12px; background: #f8f9fa; border-radius: 6px; margin-bottom: 12px; }
+    .param-summary strong { color: #333; }
+
+    .size-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
   </style>
 </head>
 <body>
   <h1>UIUC Instructional Salary Spend Per Student</h1>
-  <div class="subtitle">Spring 2026 — Grey Book Faculty Salaries &times; CIS Course Data &times; LDAP Enrollment</div>
+  <div class="subtitle">Spring 2026 — Grey Book Faculty Salaries &times; CIS Course Data &times; Enrollment</div>
 
   <div class="summary-cards">
     <div class="card">
@@ -159,44 +184,36 @@ export function generateReport(results: DepartmentAnalysis[]) {
     </div>
   </div>
 
-  <div class="controls">
-    <label for="search">Search:</label>
-    <input type="text" id="search" placeholder="e.g. Computer, Engineering, Music...">
-
-    <label for="minStudents">Min students:</label>
-    <input type="number" id="minStudents" value="0" min="0" style="width:80px">
-
-    <label for="minFaculty">Min faculty:</label>
-    <input type="number" id="minFaculty" value="0" min="0" style="width:80px">
-
-    <label>Metric:</label>
-    <div class="metric-toggle">
-      <button class="active" data-metric="perStudent">$/Student</button>
-      <button data-metric="perCreditHour">$/Credit Hr</button>
-      <button data-metric="instructionalSpend">Total Spend</button>
-      <button data-metric="perCourse">$/Course</button>
-      <button data-metric="facultyStudentRatio">Faculty:Student</button>
+  <div class="parameters-section">
+    <h2>Parameters</h2>
+    <div class="param-row">
+      <div class="param-name">Perspective</div>
+      <div class="param-control">
+        <span style="font-size:0.8rem;font-weight:600;color:#555">Divided</span>
+        <input type="range" id="perspectiveSlider" min="0" max="100" value="50" step="5">
+        <span style="font-size:0.8rem;font-weight:600;color:#555">Shared</span>
+        <span class="slider-val" id="perspectiveVal" style="font-style:italic;min-width:90px;color:#888;font-weight:400">Balanced</span>
+      </div>
+      <div class="param-desc" style="display:flex;gap:24px">
+        <div style="flex:1"><strong>Divided:</strong> If a department spends <strong>$X</strong> to run a course and <strong>Y students</strong> take it, each student receives <strong>$X/Y</strong> of instructional investment. Large courses divide the instructional investment.</div>
+        <div style="flex:1"><strong>Shared:</strong> If a department spends <strong>$X</strong> to run a course and <strong>Y students</strong> take it, each student receives <strong>$X</strong> of instructional investment. Large courses multiply the instructional investment.</div>
+      </div>
     </div>
-
-    <label><input type="checkbox" id="binToggle" checked> Group by enrollment</label>
-
-    <div class="stat-pills">
-      <span id="deptCount"></span>
-      <span id="studentCount"></span>
+    <div class="param-row">
+      <div class="param-name">Teaching-focused %</div>
+      <div class="param-control">
+        <input type="range" id="teachingPct" min="0" max="100" value="70" step="5">
+        <span class="slider-val" id="teachingPctVal">70%</span>
+      </div>
+      <div class="param-desc">Share of salary counted as teaching spend for teaching-focused faculty (lecturers, instructors, clinical). The remainder is classified as research spend.</div>
     </div>
-  </div>
-
-  <div class="controls">
-    <label>Teaching-focused:</label>
-    <div class="slider-group">
-      <input type="range" id="teachingPct" min="0" max="100" value="70">
-      <span class="slider-val" id="teachingPctVal">70%</span>
-    </div>
-
-    <label>Research-focused:</label>
-    <div class="slider-group">
-      <input type="range" id="researchPct" min="0" max="100" value="30">
-      <span class="slider-val" id="researchPctVal">30%</span>
+    <div class="param-row">
+      <div class="param-name">Research-focused %</div>
+      <div class="param-control">
+        <input type="range" id="researchPct" min="0" max="100" value="40" step="5">
+        <span class="slider-val" id="researchPctVal">40%</span>
+      </div>
+      <div class="param-desc">Share of salary counted as teaching spend for research-focused faculty (tenure-track, research professors). The remainder is classified as research spend.</div>
     </div>
   </div>
 
@@ -204,22 +221,15 @@ export function generateReport(results: DepartmentAnalysis[]) {
     <h2>Insights</h2>
 
     <div class="insight-panel">
-      <h3>Economies of Scale: $/Student Drops 10x with Enrollment</h3>
-      <p class="insight-takeaway">Departments with <strong>5,000+ students</strong> spend a median of ~<strong>$600/student</strong>. Departments under 100 students spend ~<strong>$5,400/student</strong>. But within every tier, there&rsquo;s a <strong>6&ndash;18x spread</strong> &mdash; size isn&rsquo;t the whole story.</p>
-      <p class="insight-legend">Log scale. Each dot = one department. Vertical line = median, triangle = mean.</p>
-      <svg id="stripPerStudent"></svg>
-    </div>
-
-    <div class="insight-panel">
-      <h3>$/Course Tells a Different Story</h3>
-      <p class="insight-takeaway">Dividing the same teaching spend by <strong>courses instead of students</strong> reshuffles the rankings. Large-lecture departments that look cheap per student (e.g. Accountancy at $907/student) become expensive per course ($103k). Small-seminar departments do the opposite.</p>
-      <p class="insight-legend">Log scale. Same bins, same departments, different denominator.</p>
-      <svg id="stripPerCourse"></svg>
+      <h3>Instructional Investment by Enrollment Tier</h3>
+      <p class="insight-takeaway">This chart responds to the <strong>Perspective</strong> parameter above. At $/Student, large-enrollment departments look efficient. At $/Course, the picture reverses. Within every tier, there&rsquo;s a wide spread &mdash; size isn&rsquo;t the whole story.</p>
+      <p class="insight-legend" id="perspectiveLegend">Log scale. Each dot = one department. Vertical line = median, triangle = mean.</p>
+      <svg id="stripPerspective"></svg>
     </div>
 
     <div class="insight-panel">
       <h3>Who Isn&rsquo;t Teaching?</h3>
-      <p class="insight-takeaway">Between <strong>0% and 73%</strong> of a department&rsquo;s Grey Book faculty are not matched to any CIS course section. Unmatched faculty salary is classified entirely as <strong>research spend</strong>. This is the single biggest driver of the teaching/research split.</p>
+      <p class="insight-takeaway">Between <strong>0% and 73%</strong> of a department&rsquo;s Grey Book faculty are not matched to any Spring 2026 CIS course section. Each dot shows the <strong>percentage of faculty</strong> with no course assignments. Their salary is not counted toward instructional spend &mdash; only faculty matched to courses contribute to the $/Student and $/Course figures above.</p>
       <p class="insight-legend">Linear scale (0&ndash;100%). Same bins as above.</p>
       <svg id="stripNotTeaching"></svg>
     </div>
@@ -227,7 +237,40 @@ export function generateReport(results: DepartmentAnalysis[]) {
     <p class="insight-summary" id="insightSummary"></p>
   </div>
 
-  <div class="table-wrap">
+  <div class="tab-nav">
+    <a href="#table" class="tab-link">Table</a>
+    <a href="#scatter" class="tab-link">Scatter Plot</a>
+  </div>
+
+  <div class="tab-content" id="tab-table">
+    <div class="param-summary" id="paramSummaryTable"></div>
+    <div class="controls">
+      <label for="search">Search:</label>
+      <input type="text" id="search" placeholder="e.g. Computer, Engineering, Music...">
+
+      <label for="minStudents">Min students:</label>
+      <input type="number" id="minStudents" value="0" min="0" style="width:80px">
+
+      <label for="minFaculty">Min faculty:</label>
+      <input type="number" id="minFaculty" value="0" min="0" style="width:80px">
+
+      <label>Metric:</label>
+      <div class="metric-toggle">
+        <button class="active" data-metric="perStudent">$/Student</button>
+        <button data-metric="perCreditHour">$/Credit Hr</button>
+        <button data-metric="instructionalSpend">Total Spend</button>
+        <button data-metric="perCourse">$/Course</button>
+        <button data-metric="facultyStudentRatio">Faculty:Student</button>
+      </div>
+
+      <label><input type="checkbox" id="binToggle" checked> Group by enrollment</label>
+
+      <div class="stat-pills">
+        <span id="deptCount"></span>
+        <span id="studentCount"></span>
+      </div>
+    </div>
+    <div class="table-wrap">
   <table id="dataTable">
     <thead>
       <tr>
@@ -244,19 +287,18 @@ export function generateReport(results: DepartmentAnalysis[]) {
     <tbody></tbody>
   </table>
   </div>
+  </div>
 
-  <details class="chart-section">
-    <summary>Scatter Plot</summary>
-    <div class="chart-container">
-      <div class="scatter-controls">
-        <label for="scatterX">X axis:</label>
-        <select id="scatterX"></select>
-        <label for="scatterY">Y axis:</label>
-        <select id="scatterY"></select>
-      </div>
-      <svg id="scatterPlot"></svg>
+  <div class="tab-content" id="tab-scatter">
+    <div class="param-summary" id="paramSummaryScatter"></div>
+    <div class="scatter-controls">
+      <label for="scatterX">X axis:</label>
+      <select id="scatterX"></select>
+      <label for="scatterY">Y axis:</label>
+      <select id="scatterY"></select>
     </div>
-  </details>
+    <svg id="scatterPlot"></svg>
+  </div>
 
   <div id="tooltip"></div>
 
@@ -279,34 +321,71 @@ export function generateReport(results: DepartmentAnalysis[]) {
 
   <div class="methodology">
     <h2>Methodology</h2>
+
+    <h3 style="font-size:1rem;margin-top:16px;color:#333">Worked Example</h3>
+    <p style="line-height:1.7;margin-bottom:12px">
+      Suppose the Grey Book lists <strong>Prof. Jane Smith</strong> with a total proposed salary of <strong>$120,000</strong> and a faculty type of <strong>tenure-track</strong> (research-focused). The Grey Book is used only to enumerate faculty and their salaries &mdash; not for departmental organization.
+    </p>
+    <div class="assumption">Assumption: The Grey Book is the source of truth for faculty names, salaries, and appointment types. We do not use the Grey Book&rsquo;s departmental groupings to determine which courses belong to which department.</div>
+    <ol style="line-height:1.7;margin-bottom:12px;margin-left:20px">
+      <li><strong>Faculty lookup.</strong> We search the Spring 2026 CIS course catalog for any instructor whose last name is &ldquo;Smith&rdquo; and first name starts with &ldquo;J&rdquo;. We find Prof. Smith listed as instructor on two courses: WIDG 101 (2 lecture sections) and WIDG 430 (1 section). Independent Study sections are excluded.
+        <div class="assumption">Assumption: Faculty are matched by normalized last name + first initial. This can miss faculty whose names are recorded differently across systems, and cannot distinguish two faculty with the same last name and first initial.</div>
+      </li>
+      <li><strong>Match.</strong> Prof. Smith is now &ldquo;matched&rdquo; &mdash; she appears in both the Grey Book and CIS. Her salary counts toward instructional spend. A Grey Book faculty member who is not found in any CIS course section is &ldquo;unmatched,&rdquo; and their salary is not counted toward instructional spend at all.
+        <div class="assumption">Assumption: If a faculty member is not listed as an instructor on any CIS course section, we treat their entire salary as non-instructional. In practice, some may be teaching courses not yet reflected in CIS.</div>
+      </li>
+      <li><strong>Teaching spend.</strong> As a research-focused faculty member, the Research-focused % slider determines how much of her salary is classified as teaching spend. At the default 40%, her teaching spend contribution is $120,000 &times; 0.40 = <strong>$48,000</strong>. The remaining $72,000 is classified as research spend.
+        <div class="assumption">Assumption: The teaching/research split is uniform within each faculty category. In reality, individual faculty may devote more or less time to teaching. The sliders let you explore different assumptions.</div>
+      </li>
+      <li><strong>Per-course allocation.</strong> Prof. Smith teaches 2 courses, so her $48,000 teaching spend is split equally: <strong>$24,000</strong> to WIDG 101 and <strong>$24,000</strong> to WIDG 430. If another faculty member also teaches WIDG 101, their allocation is added to that course&rsquo;s total.
+        <div class="assumption">Assumption: A faculty member&rsquo;s teaching spend is divided equally among the courses they teach. A large lecture and a small seminar by the same professor each receive the same allocation. We don&rsquo;t have data on per-course effort, so equal division is the simplest defensible choice.</div>
+      </li>
+      <li><strong>Enrollment.</strong> Unique students are counted across all non-excluded sections taught by matched faculty. A student enrolled in multiple sections or courses is counted once per department.</li>
+      <li><strong>Metrics.</strong> The department&rsquo;s total teaching spend (summed across all matched faculty) is divided by either total unique students (Divided perspective) or total courses (Shared perspective), or a blend of both.</li>
+    </ol>
+    <p style="line-height:1.7;margin-bottom:12px">
+      If Widget Studies had a second faculty member &mdash; say a lecturer (teaching-focused) earning $80,000 who teaches 3 courses &mdash; her teaching spend at 70% would be $56,000, split $18,667 per course. The department&rsquo;s total teaching spend would be $48,000 + $56,000 = <strong>$104,000</strong>. If the department has 500 unique students, the Divided metric would be $104,000 / 500 = <strong>$208/student</strong>.
+    </p>
+
+    <h3 style="font-size:1rem;margin-top:20px;color:#333">Data Sources</h3>
     <ul>
-      <li><strong>Approach:</strong> For each Grey Book department, every faculty member is searched against the entire CIS course catalog by name (last name + first initial). Matched faculty&rsquo;s course sections determine enrollment. This means a department&rsquo;s courses are discovered automatically across all CIS subject codes&mdash;no manual department mapping required.</li>
-      <li><strong>Faculty categories:</strong> Teaching-focused = lecturers, instructors, clinical faculty. Research-focused = tenure-track professors, research professors. Faculty with &ldquo;other&rdquo; titles (e.g., administrative) are excluded from instructional spend.</li>
-      <li><strong>Salary &amp; FTE:</strong> Teaching spend uses only <strong>matched</strong> faculty (those found teaching in CIS). Unmatched non-admin faculty salary is classified entirely as research spend. The Grey Book already prorates salary by FTE. Only faculty-class positions (AA/AB/AL/AM) are summed; administrative stipends (BA/BC) and zero-FTE endowed chair supplements are excluded.</li>
-      <li><strong>Section filtering:</strong> Independent Study sections (CIS type code &ldquo;IND&rdquo;) are excluded before faculty matching. These are typically thesis supervision or individual research &mdash; not classroom instruction. Faculty who only appear in IND sections are not counted as teaching.</li>
-      <li><strong>Enrollment:</strong> Unique students across all non-excluded sections taught by matched faculty, regardless of CIS subject code. A student enrolled in multiple sections is counted once per department.</li>
-      <li><strong>Credit hours:</strong> Counted per course (not per section). A 3-credit course with 4 sections counts as 3 credit hours, not 12.</li>
+      <li><strong>Faculty salaries:</strong> The Grey Book (Academic Human Resources) lists every faculty appointment with title, FTE, and proposed salary. The Grey Book is used only to enumerate faculty and their salaries &mdash; departmental groupings in this analysis come from CIS course assignments, not Grey Book org structure. Only faculty-class positions (AA/AB/AL/AM) are included; administrative stipends (BA/BC) and zero-FTE endowed chair supplements are excluded. The Grey Book already prorates salary by FTE.</li>
+      <li><strong>Course catalog:</strong> The CIS (Course Information Suite) provides the Spring 2026 course schedule including instructors, sections, and section types.</li>
+      <li><strong>Enrollment:</strong> Student enrollment counts are sourced from university enrollment systems for each course section.</li>
     </ul>
 
-    <h2 style="margin-top:20px">Data Quality</h2>
+    <h3 style="font-size:1rem;margin-top:20px;color:#333">Faculty Categories</h3>
+    <ul>
+      <li><strong>Teaching-focused:</strong> Lecturers, instructors, clinical faculty. Default instructional percentage: 70%.</li>
+      <li><strong>Research-focused:</strong> Tenure-track professors, research professors. Default instructional percentage: 40%.</li>
+      <li><strong>Other:</strong> Faculty with administrative or other titles are excluded from instructional spend entirely.</li>
+      <li><strong>Unmatched:</strong> Faculty who appear in the Grey Book but are not found teaching any CIS course section. Their salary is not counted toward instructional spend.</li>
+    </ul>
+
+    <h3 style="font-size:1rem;margin-top:20px;color:#333">Key Decisions</h3>
+    <ul>
+      <li><strong>Section filtering:</strong> Independent Study sections (CIS type code &ldquo;IND&rdquo;) are excluded. These are typically thesis supervision or individual research, not classroom instruction. Faculty who only appear in IND sections are not counted as teaching.</li>
+      <li><strong>Credit hours:</strong> Counted per course, not per section. A 3-credit course with 4 sections counts as 3 credit hours, not 12.</li>
+    </ul>
+
+    <h2 style="margin-top:24px">Data Quality</h2>
 
     <h3 style="font-size:0.95rem;margin-top:12px;color:#555">Warning Badges</h3>
     <ul>
-      <li><span class="warning-badge ldap">LDAP errors</span> More than 10% of enrollment queries failed, so student counts may be understated.</li>
       <li><span class="warning-badge collision">name collision</span> Two or more Grey Book faculty share the same last name and first initial, making it impossible to distinguish who is teaching which section.</li>
     </ul>
 
     <h3 style="font-size:0.95rem;margin-top:12px;color:#555">Known Limitations</h3>
     <ul>
-      <li><strong>Name matching:</strong> Faculty are matched by normalized last name and first initial. Hyphenated/compound last names are normalized. However, if a name is stored differently across systems, the match may fail. Name collisions (two faculty with same last name + first initial) are flagged but not resolved.</li>
+      <li><strong>Name matching:</strong> Faculty are matched by normalized last name and first initial. Hyphenated/compound last names are normalized. If a name is stored differently across systems, the match may fail. Name collisions (two faculty with same last name + first initial) are flagged but not resolved.</li>
       <li><strong>Non-faculty instructors:</strong> Many CIS-listed instructors are graduate students, adjuncts, or visiting lecturers without Grey Book faculty appointments. Their salaries are not included. This analysis captures permanent faculty instructional spend, not total instructional labor costs.</li>
       <li><strong>Split appointments:</strong> The Grey Book lists each department&rsquo;s prorated share separately. There is no cross-department double-counting.</li>
     </ul>
   </div>
 
   <script>
-    const DATA = ${JSON.stringify(sorted)};
-    const EXCLUDED = ${JSON.stringify(excluded)};
+    const DATA = ${JSON.stringify(sorted.map(r => { const { courseEnrollments, ...rest } = r; return rest; }))};
+    const EXCLUDED = ${JSON.stringify(excluded.map(r => { const { courseEnrollments, ...rest } = r; return rest; }))};
 
     const ENROLLMENT_BINS = [
       { label: '< 100 students', min: 0, max: 100 },
@@ -329,7 +408,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
       { key: 'computedSpend', label: 'Teaching Spend', get: r => computeSpend(r), fmt: fmt$ },
       { key: 'computedResearch', label: 'Research Spend', get: r => computeResearchSpend(r), fmt: fmt$ },
       { key: 'computedTeachingPct', label: 'Teaching %', get: r => computeTeachingPct(r), fmt: fmtPct },
-      { key: 'perCourse', label: '$/Course', get: r => r.courseCount > 0 ? computeSpend(r) / r.courseCount : 0, fmt: fmt$ },
+      { key: 'perCourse', label: '$/Course', get: r => avgPerCourseSpend(r), fmt: fmt$ },
       { key: 'facultyStudentRatio', label: 'Faculty:Student Ratio', get: r => r.uniqueStudents > 0 ? r.matchedFaculty / r.uniqueStudents : 0, fmt: n => n > 0 ? '1:' + Math.round(1 / n) : '0' },
       { key: 'notTeachingPct', label: '% Not Teaching', get: r => 1 - r.matchRate, fmt: fmtPct },
     ];
@@ -341,10 +420,11 @@ export function generateReport(results: DepartmentAnalysis[]) {
     let minStudents = 0;
     let minFaculty = 0;
     let teachingPct = 0.7;
-    let researchPct = 0.3;
+    let researchPct = 0.4;
     let expandedId = null;
     let binsEnabled = true;
     let collapsedBins = new Set();
+    let perspectiveAlpha = 0.5;
     let currentXAxis = 'uniqueStudents';
     let currentYAxis = 'computed_metric';
 
@@ -365,11 +445,44 @@ export function generateReport(results: DepartmentAnalysis[]) {
       return total > 0 ? t / total : 0;
     }
 
+    function computePerCourseSpend(r) {
+      var result = {};
+      var fc = r.facultyCourses || [];
+      for (var i = 0; i < fc.length; i++) {
+        var pct = fc[i].facultyType === 'teaching' ? teachingPct : researchPct;
+        var perCourse = fc[i].salary * pct / (fc[i].courseKeys.length || 1);
+        for (var j = 0; j < fc[i].courseKeys.length; j++) {
+          var key = fc[i].courseKeys[j];
+          result[key] = (result[key] || 0) + perCourse;
+        }
+      }
+      return result;
+    }
+
+    function avgPerCourseSpend(r) {
+      var courseSpends = computePerCourseSpend(r);
+      var values = Object.values(courseSpends);
+      if (values.length === 0) {
+        // Fallback to uniform division if no facultyCourses data
+        var spend = computeSpend(r);
+        return r.courseCount > 0 ? spend / r.courseCount : 0;
+      }
+      return values.reduce(function(a, b) { return a + b; }, 0) / values.length;
+    }
+
+    function blendedPerspective(r, alpha) {
+      var perStu = r.uniqueStudents > 0 ? computeSpend(r) / r.uniqueStudents : 0;
+      var perCrs = avgPerCourseSpend(r);
+      if (perStu <= 0 || perCrs <= 0) return alpha < 0.5 ? perStu : perCrs;
+      // Geometric interpolation — smooth on log scale
+      return Math.pow(perStu, 1 - alpha) * Math.pow(perCrs, alpha);
+    }
+
     function computeMetric(r) {
       const spend = computeSpend(r);
       if (currentMetric === 'perStudent') return r.uniqueStudents > 0 ? spend / r.uniqueStudents : 0;
       if (currentMetric === 'perCreditHour') return r.totalCreditHours > 0 ? spend / r.totalCreditHours : 0;
-      if (currentMetric === 'perCourse') return r.courseCount > 0 ? spend / r.courseCount : 0;
+      if (currentMetric === 'perCourse') return avgPerCourseSpend(r);
       if (currentMetric === 'facultyStudentRatio') return r.uniqueStudents > 0 ? r.matchedFaculty / r.uniqueStudents : 0;
       return spend;
     }
@@ -475,7 +588,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
         ...bin,
         index: i,
         departments: d.filter(r => r.uniqueStudents >= bin.min && r.uniqueStudents < bin.max),
-      })).filter(g => g.departments.length > 0);
+      })).filter(g => g.departments.length > 0).reverse();
 
       for (const bin of bins) {
         const metrics = bin.departments.map(r => computeMetric(r));
@@ -512,12 +625,14 @@ export function generateReport(results: DepartmentAnalysis[]) {
       tr.style.cursor = 'pointer';
       tr.dataset.id = r.grayBookId;
       if (r.grayBookId === expandedId) tr.classList.add('expanded');
+      const binIdx = getBinIndex(r.uniqueStudents);
+      const sizeDot = '<span class="size-dot" style="background:' + BIN_COLORS[binIdx] + '" title="' + ENROLLMENT_BINS[binIdx].label + '"></span>';
       const badges = [];
-      if (r.dataQuality?.ldapFailureRate > 0.1) badges.push('<span class="warning-badge ldap">LDAP errors</span>');
+      if (r.dataQuality?.ldapFailureRate > 0.1) badges.push('<span class="warning-badge enroll-err">Enrollment data errors</span>');
       if (r.dataQuality?.nameCollisions?.length > 0) badges.push('<span class="warning-badge collision">name collision</span>');
       const subjects = (r.cisSubjects || []).join(', ');
       tr.innerHTML = \`
-        <td><strong>\${r.grayBookName}</strong>\${badges.join('')}<br><span style="font-size:0.7rem;color:#888">\${subjects}</span></td>
+        <td>\${sizeDot}<strong>\${r.grayBookName}</strong>\${badges.join('')}<br><span style="font-size:0.7rem;color:#888;margin-left:13px">\${subjects}</span></td>
         <td class="right">\${r.totalFaculty} <span style="color:#888">(\${r.matchedFaculty})</span></td>
         <td class="right">\${fmtPct(r.matchRate)}</td>
         <td class="right">\${r.uniqueStudents.toLocaleString()}</td>
@@ -545,6 +660,20 @@ export function generateReport(results: DepartmentAnalysis[]) {
       const rPct = nonAdminSalary > 0 ? rSpend / nonAdminSalary : 0;
       const perStu = r.uniqueStudents > 0 ? tSpend / r.uniqueStudents : 0;
       const perCH = r.totalCreditHours > 0 ? tSpend / r.totalCreditHours : 0;
+      var courseBreakdown = '';
+      var courseSpends = computePerCourseSpend(r);
+      var courseKeys = Object.keys(courseSpends);
+      if (courseKeys.length > 0) {
+        courseKeys.sort(function(a, b) { return courseSpends[b] - courseSpends[a]; });
+        var courseRows = courseKeys.map(function(key) {
+          return '<dt>' + key + '</dt><dd>' + fmt$(courseSpends[key]) + '</dd>';
+        }).join('');
+        courseBreakdown = \`<div class="detail-section">
+          <h4>Per-Course Allocation</h4>
+          <dl>\${courseRows}</dl>
+        </div>\`;
+      }
+
       return \`<div class="detail-content">
         <div class="detail-section">
           <h4>Faculty</h4>
@@ -576,6 +705,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
             <dt>$/credit hour</dt><dd>\${fmt$(perCH)}</dd>
           </dl>
         </div>
+        \${courseBreakdown}
         <div class="detail-section">
           <h4>Identity</h4>
           <dl>
@@ -793,13 +923,25 @@ export function generateReport(results: DepartmentAnalysis[]) {
       });
     }
 
+    function perspectiveLabel() {
+      if (perspectiveAlpha === 0) return 'Divided ($/Student)';
+      if (perspectiveAlpha >= 1) return 'Shared ($/Course)';
+      return 'Divided \u2194 Shared (' + Math.round(perspectiveAlpha * 100) + '% toward Shared)';
+    }
+
     function renderInsights() {
-      renderBinnedStrip('stripPerStudent',
-        function(r) { return r.uniqueStudents > 0 ? computeSpend(r) / r.uniqueStudents : 0; },
-        fmt$, '$/Student', true);
-      renderBinnedStrip('stripPerCourse',
-        function(r) { return r.courseCount > 0 ? computeSpend(r) / r.courseCount : 0; },
-        fmt$, '$/Course', true);
+      var label = perspectiveLabel();
+      renderBinnedStrip('stripPerspective',
+        function(r) { return blendedPerspective(r, perspectiveAlpha); },
+        fmt$, label, true);
+      var legendEl = document.getElementById('perspectiveLegend');
+      if (perspectiveAlpha === 0) {
+        legendEl.textContent = 'Log scale. Each dot = one department. Vertical line = median, triangle = mean.';
+      } else if (perspectiveAlpha >= 1) {
+        legendEl.textContent = 'Log scale. Each dot = average allocated spend per course for one department. Faculty salary split equally across courses they teach.';
+      } else {
+        legendEl.textContent = 'Log scale. Geometric blend of $/Student and $/Course (slide to see each perspective). Vertical line = median, triangle = mean.';
+      }
       renderBinnedStrip('stripNotTeaching',
         function(r) { return 1 - r.matchRate; },
         fmtPct, '% Not Teaching', false);
@@ -822,15 +964,13 @@ export function generateReport(results: DepartmentAnalysis[]) {
 
       const margin = { top: 8, right: 20, bottom: 32, left: 150 };
       const rowHeight = 36;
-      const width = 700;
+      const width = 1100;
       const height = margin.top + bins.length * rowHeight + margin.bottom;
       const plotW = width - margin.left - margin.right;
 
-      svg.setAttribute('width', width);
-      svg.setAttribute('height', height);
       svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
       svg.style.width = '100%';
-      svg.style.maxWidth = width + 'px';
+      svg.style.height = 'auto';
 
       const allValues = d.map(r => valueFn(r));
       const positiveValues = allValues.filter(v => v > 0);
@@ -1009,11 +1149,21 @@ export function generateReport(results: DepartmentAnalysis[]) {
       document.getElementById('meanPerStudent').textContent = fmt$(mean(perStudentVals));
     }
 
+    function renderParamSummary() {
+      var desc = perspectiveDescription(Math.round(perspectiveAlpha * 100));
+      var text = 'Perspective: <strong>' + desc + '</strong> &middot; Teaching-focused: <strong>' + Math.round(teachingPct * 100) + '%</strong> &middot; Research-focused: <strong>' + Math.round(researchPct * 100) + '%</strong>';
+      var el1 = document.getElementById('paramSummaryTable');
+      var el2 = document.getElementById('paramSummaryScatter');
+      if (el1) el1.innerHTML = text;
+      if (el2) el2.innerHTML = text;
+    }
+
     function render() {
       renderTable();
       renderChart();
       renderInsights();
       updateSummaryCards();
+      renderParamSummary();
       renderExcluded();
     }
 
@@ -1052,6 +1202,24 @@ export function generateReport(results: DepartmentAnalysis[]) {
     document.getElementById('binToggle').addEventListener('change', e => {
       binsEnabled = e.target.checked;
       renderTable();
+    });
+
+    // Perspective slider
+    function perspectiveDescription(pct) {
+      if (pct === 0) return 'Fully Divided';
+      if (pct <= 25) return 'Mostly Divided';
+      if (pct <= 45) return 'Leaning Divided';
+      if (pct <= 55) return 'Balanced';
+      if (pct <= 75) return 'Leaning Shared';
+      if (pct < 100) return 'Mostly Shared';
+      return 'Fully Shared';
+    }
+    document.getElementById('perspectiveSlider').addEventListener('input', e => {
+      var pct = parseInt(e.target.value);
+      perspectiveAlpha = pct / 100;
+      document.getElementById('perspectiveVal').textContent = perspectiveDescription(pct);
+      renderInsights();
+      renderParamSummary();
     });
 
     // Sliders
@@ -1093,7 +1261,31 @@ export function generateReport(results: DepartmentAnalysis[]) {
       });
     });
 
+    // Tab switching
+    function switchTab() {
+      var hash = location.hash || '#table';
+      document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
+      document.querySelectorAll('.tab-link').forEach(function(el) { el.classList.remove('active'); });
+      var tabId = 'tab-' + hash.slice(1);
+      var tab = document.getElementById(tabId);
+      if (tab) {
+        tab.classList.add('active');
+      } else {
+        document.getElementById('tab-table').classList.add('active');
+        hash = '#table';
+      }
+      var link = document.querySelector('.tab-link[href="' + hash + '"]');
+      if (link) {
+        link.classList.add('active');
+      } else {
+        document.querySelector('.tab-link[href="#table"]').classList.add('active');
+      }
+      if (hash === '#scatter') renderChart();
+    }
+    window.addEventListener('hashchange', switchTab);
+
     initScatterDropdowns();
+    switchTab();
     render();
   </script>
 </body>
