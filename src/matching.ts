@@ -1,26 +1,29 @@
 import type { ProcessedFaculty } from "./salaries"
 import type { CISCourse, CISInstructor } from "./cis"
-import type { GPAInstructor } from "./gpa"
+
+export interface CourseTeaching {
+  subject: string
+  number: string
+  label: string
+  sections: { sectionNumber: string; crn: number }[]
+}
 
 export interface MatchedFaculty {
   faculty: ProcessedFaculty
-  coursesTeaching: { subject: string; number: string; label: string; sections: string[] }[]
+  coursesTeaching: CourseTeaching[]
 }
 
 export interface MatchResult {
   matched: MatchedFaculty[]
   unmatchedFaculty: ProcessedFaculty[]
-  unmatchedInstructors: CISInstructor[]
   nameCollisions: string[]
-  gpaConfirmed: number
-  gpaOnlyInstructors: number
 }
 
 function normalizeLastName(name: string): string {
   return name.toLowerCase().replace(/-/g, " ").replace(/\s+/g, " ").trim()
 }
 
-function extractNameParts(grayBookName: string): { lastName: string; firstInitial: string } | null {
+export function extractNameParts(grayBookName: string): { lastName: string; firstInitial: string } | null {
   // Grey Book format: "LastName, FirstName MiddleName" or "LastName, FirstName"
   const parts = grayBookName.split(",")
   if (parts.length < 2) return null
@@ -32,36 +35,40 @@ function extractNameParts(grayBookName: string): { lastName: string; firstInitia
   return { lastName, firstInitial: firstPart[0].toLowerCase() }
 }
 
+/**
+ * Match a department's Grey Book faculty against CIS courses for specific subjects.
+ * Courses are scoped to the department's mapped CIS subjects to avoid name collisions.
+ */
 export function matchFacultyToCourses(
   faculty: ProcessedFaculty[],
   courses: CISCourse[],
-  gpaLookup?: Map<string, GPAInstructor[]>,
 ): MatchResult {
   const matched: MatchedFaculty[] = []
   const unmatchedFaculty: ProcessedFaculty[] = []
 
-  // Build a lookup of all CIS instructors for quick matching
-  const allCISInstructors = new Map<string, { instructor: CISInstructor; courses: { subject: string; number: string; label: string; section: string }[] }>()
+  // Build a lookup of CIS instructors from the scoped courses
+  const cisInstructors = new Map<string, { instructor: CISInstructor; courses: { subject: string; number: string; label: string; sectionNumber: string; crn: number }[] }>()
 
   for (const course of courses) {
     for (const section of course.sections) {
       for (const instr of section.instructors) {
-        const key = `${instr.lastName.toLowerCase()}|${instr.firstName.toLowerCase()}`
-        if (!allCISInstructors.has(key)) {
-          allCISInstructors.set(key, { instructor: instr, courses: [] })
+        const cisLastName = normalizeLastName(instr.lastName)
+        const cisFirstInitial = instr.firstName.toLowerCase().charAt(0)
+        const key = `${cisLastName}|${cisFirstInitial}`
+
+        if (!cisInstructors.has(key)) {
+          cisInstructors.set(key, { instructor: instr, courses: [] })
         }
-        allCISInstructors.get(key)!.courses.push({
+        cisInstructors.get(key)!.courses.push({
           subject: course.subject,
           number: course.number,
           label: course.label,
-          section: section.sectionNumber,
+          sectionNumber: section.sectionNumber,
+          crn: section.crn,
         })
       }
     }
   }
-
-  // Track which CIS instructors got matched
-  const matchedCISKeys = new Set<string>()
 
   for (const f of faculty) {
     const nameParts = extractNameParts(f.name)
@@ -70,43 +77,22 @@ export function matchFacultyToCourses(
       continue
     }
 
-    // Search CIS instructors for matching (lastName, firstInitial)
-    let found = false
-    const coursesTeaching: MatchedFaculty["coursesTeaching"] = []
+    const key = `${nameParts.lastName}|${nameParts.firstInitial}`
+    const entry = cisInstructors.get(key)
 
-    for (const [key, entry] of allCISInstructors) {
-      const cisLastName = normalizeLastName(entry.instructor.lastName)
-      const cisFirstInitial = entry.instructor.firstName.toLowerCase().charAt(0)
-
-      if (cisLastName === nameParts.lastName && cisFirstInitial === nameParts.firstInitial) {
-        matchedCISKeys.add(key)
-        found = true
-
-        // Group by course
-        const courseMap = new Map<string, { subject: string; number: string; label: string; sections: string[] }>()
-        for (const c of entry.courses) {
-          const courseKey = `${c.subject}-${c.number}`
-          if (!courseMap.has(courseKey)) {
-            courseMap.set(courseKey, { subject: c.subject, number: c.number, label: c.label, sections: [] })
-          }
-          courseMap.get(courseKey)!.sections.push(c.section)
+    if (entry) {
+      // Group by course (subject + number)
+      const courseMap = new Map<string, CourseTeaching>()
+      for (const c of entry.courses) {
+        const courseKey = `${c.subject}-${c.number}`
+        if (!courseMap.has(courseKey)) {
+          courseMap.set(courseKey, { subject: c.subject, number: c.number, label: c.label, sections: [] })
         }
-        coursesTeaching.push(...courseMap.values())
+        courseMap.get(courseKey)!.sections.push({ sectionNumber: c.sectionNumber, crn: c.crn })
       }
-    }
-
-    if (found) {
-      matched.push({ faculty: f, coursesTeaching })
+      matched.push({ faculty: f, coursesTeaching: [...courseMap.values()] })
     } else {
       unmatchedFaculty.push(f)
-    }
-  }
-
-  // Collect unmatched CIS instructors
-  const unmatchedInstructors: CISInstructor[] = []
-  for (const [key, entry] of allCISInstructors) {
-    if (!matchedCISKeys.has(key)) {
-      unmatchedInstructors.push(entry.instructor)
     }
   }
 
@@ -126,29 +112,5 @@ export function matchFacultyToCourses(
     }
   }
 
-  // GPA cross-check: validate matches against historical GPA data
-  let gpaConfirmed = 0
-  let gpaOnlyInstructors = 0
-
-  if (gpaLookup && gpaLookup.size > 0) {
-    const matchedKeys = new Set<string>()
-    for (const m of matched) {
-      const parts = extractNameParts(m.faculty.name)
-      if (!parts) continue
-      const key = `${parts.lastName}|${parts.firstInitial}`
-      matchedKeys.add(key)
-      if (gpaLookup.has(key)) {
-        gpaConfirmed++
-      }
-    }
-
-    // Count GPA instructors not matched to any Grey Book faculty
-    for (const key of gpaLookup.keys()) {
-      if (!matchedKeys.has(key)) {
-        gpaOnlyInstructors++
-      }
-    }
-  }
-
-  return { matched, unmatchedFaculty, unmatchedInstructors, nameCollisions, gpaConfirmed, gpaOnlyInstructors }
+  return { matched, unmatchedFaculty, nameCollisions }
 }

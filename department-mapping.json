@@ -1,842 +1,894 @@
 [
   {
-    "cisSubject": "ABE",
-    "cisName": "Agricultural and Biological Engineering",
-    "grayBookId": "c1-d6",
-    "grayBookName": "Agricultural & Biological Engr",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "ACCY",
-    "cisName": "Accountancy",
-    "grayBookId": "c15-d1",
-    "grayBookName": "Accountancy",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "ACE",
-    "cisName": "Agricultural and Consumer Economics",
     "grayBookId": "c1-d4",
     "grayBookName": "Agr & Consumer Economics",
-    "matchScore": 1,
+    "cisSubjects": [
+      "ACE"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "ADV",
-    "cisName": "Advertising",
-    "grayBookId": "c8-d1",
-    "grayBookName": "Advertising",
-    "matchScore": 1,
+    "grayBookId": "c1-d6",
+    "grayBookName": "Agricultural & Biological Engr",
+    "cisSubjects": [
+      "ABE"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "AE",
-    "cisName": "Aerospace Engineering",
-    "grayBookId": "c17-d1",
-    "grayBookName": "Aerospace Engineering",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "AFRO",
-    "cisName": "African American Studies",
-    "grayBookId": "c20-d2",
-    "grayBookName": "African American Studies",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "ANSC",
-    "cisName": "Animal Sciences",
     "grayBookId": "c1-d7",
     "grayBookName": "Animal Sciences",
-    "matchScore": 1,
+    "cisSubjects": [
+      "ANSC"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "ANTH",
-    "cisName": "Anthropology",
-    "grayBookId": "c20-d4",
-    "grayBookName": "Anthropology",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "ARCH",
-    "cisName": "Architecture",
-    "grayBookId": "c14-d1",
-    "grayBookName": "Architecture",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "ASRM",
-    "cisName": "Actuarial Science and Risk Management",
-    "grayBookId": "c20-d1",
-    "grayBookName": "Actuarial Sci and Risk Mgmt",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "ASTR",
-    "cisName": "Astronomy",
-    "grayBookId": "c20-d7",
-    "grayBookName": "Astronomy",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "ATMS",
-    "cisName": "Atmospheric Sciences",
-    "grayBookId": "c20-d17",
-    "grayBookName": "Climate Meteorology & Atm Sci",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "BADM",
-    "cisName": "Business Administration",
-    "grayBookId": "c15-d2",
-    "grayBookName": "Business Administration",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "BIOE",
-    "cisName": "Bioengineering",
-    "grayBookId": "c17-d3",
-    "grayBookName": "Bioengineering",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "CDB",
-    "cisName": "Cell and Developmental Biology",
-    "grayBookId": "c20-d10",
-    "grayBookName": "Cell & Developmental Biology",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "CEE",
-    "cisName": "Civil and Environmental Engineering",
-    "grayBookId": "c17-d4",
-    "grayBookName": "Civil & Environmental Eng",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "CHBE",
-    "cisName": "Chemical and Biomolecular Engineering",
-    "grayBookId": "c20-d14",
-    "grayBookName": "Chemical & Biomolecular Engr",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "CHEM",
-    "cisName": "Chemistry",
-    "grayBookId": "c20-d15",
-    "grayBookName": "Chemistry",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "CI",
-    "cisName": "Curriculum and Instruction",
-    "grayBookId": "c11-d4",
-    "grayBookName": "Curriculum and Instruction",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "CMN",
-    "cisName": "Communication",
-    "grayBookId": "c20-d19",
-    "grayBookName": "Communication",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "CPSC",
-    "cisName": "Crop Sciences",
     "grayBookId": "c1-d9",
     "grayBookName": "Crop Sciences",
-    "matchScore": 1,
+    "cisSubjects": [
+      "CPSC"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "CS",
-    "cisName": "Computer Science",
-    "grayBookId": "c17-d21",
-    "grayBookName": "Siebel School Comp & Data Sci",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "CWL",
-    "cisName": "Comparative and World Literature",
-    "grayBookId": "c20-d20",
-    "grayBookName": "Comparative & World Literature",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "DANC",
-    "cisName": "Dance",
-    "grayBookId": "c14-d3",
-    "grayBookName": "Dance",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "EALC",
-    "cisName": "East Asian Language and Culture",
-    "grayBookId": "c20-d23",
-    "grayBookName": "E. Asian Languages & Cultures",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "ECE",
-    "cisName": "Electrical and Computer Engineering",
-    "grayBookId": "c17-d7",
-    "grayBookName": "Electrical & Computer Eng",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "ECON",
-    "cisName": "Economics",
-    "grayBookId": "c20-d25",
-    "grayBookName": "Economics",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "ENGL",
-    "cisName": "English",
-    "grayBookId": "c20-d26",
-    "grayBookName": "English",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "ENT",
-    "cisName": "Entomology",
-    "grayBookId": "c20-d27",
-    "grayBookName": "Entomology",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "EPOL",
-    "cisName": "Education Policy, Organization and Leadership",
-    "grayBookId": "c11-d5",
-    "grayBookName": "Educ Policy, Orgzn & Leadrshp",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "EPSY",
-    "cisName": "Educational Psychology",
-    "grayBookId": "c11-d7",
-    "grayBookName": "Educational Psychology",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "FIN",
-    "cisName": "Finance",
-    "grayBookId": "c15-d6",
-    "grayBookName": "Finance",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "FR",
-    "cisName": "French",
-    "grayBookId": "c20-d30",
-    "grayBookName": "French and Italian",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "FSHN",
-    "cisName": "Food Science and Human Nutrition",
     "grayBookId": "c1-d10",
     "grayBookName": "Food Science & Human Nutrition",
-    "matchScore": 1,
+    "cisSubjects": [
+      "FSHN"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "GEOL",
-    "cisName": "Geology",
-    "grayBookId": "c20-d24",
-    "grayBookName": "Earth Sci & Environmental Chng",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "GER",
-    "cisName": "German",
-    "grayBookId": "c20-d33",
-    "grayBookName": "Germanic Languages & Lit",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "GGIS",
-    "cisName": "Geography & Geographic Information Science",
-    "grayBookId": "c20-d32",
-    "grayBookName": "Geography & GIS",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "GWS",
-    "cisName": "Gender and Women's Studies",
-    "grayBookId": "c20-d31",
-    "grayBookName": "Gender and Women's Studies",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "HDFS",
-    "cisName": "Human Development and Family Studies",
     "grayBookId": "c1-d11",
     "grayBookName": "Human Dvlpmt & Family Studies",
-    "matchScore": 1,
+    "cisSubjects": [
+      "HDFS"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "HIST",
-    "cisName": "History",
-    "grayBookId": "c20-d35",
-    "grayBookName": "History",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "HK",
-    "cisName": "Health and Kinesiology",
-    "grayBookId": "c2-d5",
-    "grayBookName": "Health and Kinesiology",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "IB",
-    "cisName": "Integrative Biology",
-    "grayBookId": "c20-d57",
-    "grayBookName": "School of Integrative Biology",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "IE",
-    "cisName": "Industrial Engineering",
-    "grayBookId": "c17-d12",
-    "grayBookName": "Industrial&Enterprise Sys Eng",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "INFO",
-    "cisName": "Informatics",
-    "grayBookId": "c25-d1",
-    "grayBookName": "Informatics",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "IS",
-    "cisName": "Information Sciences",
-    "grayBookId": "c25-d2",
-    "grayBookName": "Information Sciences",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "JOUR",
-    "cisName": "Journalism",
-    "grayBookId": "c8-d10",
-    "grayBookName": "Journalism",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "LA",
-    "cisName": "Landscape Architecture",
-    "grayBookId": "c14-d8",
-    "grayBookName": "Landscape Architecture",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "LAW",
-    "cisName": "Law",
-    "grayBookId": "c19-d1",
-    "grayBookName": "Law",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "LER",
-    "cisName": "Labor and Employment Relations",
-    "grayBookId": "c26-d1",
-    "grayBookName": "School of Labor & Empl. Rel.",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "LING",
-    "cisName": "Linguistics",
-    "grayBookId": "c20-d41",
-    "grayBookName": "Linguistics",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "MACS",
-    "cisName": "Media and Cinema Studies",
-    "grayBookId": "c8-d11",
-    "grayBookName": "Media and Cinema Studies",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "MATH",
-    "cisName": "Mathematics",
-    "grayBookId": "c20-d42",
-    "grayBookName": "Mathematics",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "MCB",
-    "cisName": "Molecular and Cell Biology",
-    "grayBookId": "c20-d58",
-    "grayBookName": "School of Molecular & Cell Bio",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "ME",
-    "cisName": "Mechanical Engineering",
-    "grayBookId": "c17-d16",
-    "grayBookName": "Mechanical Sci & Engineering",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "MICR",
-    "cisName": "Microbiology",
-    "grayBookId": "c20-d43",
-    "grayBookName": "Microbiology",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "MIP",
-    "cisName": "Molecular and Integrative Physiology",
-    "grayBookId": "c20-d44",
-    "grayBookName": "Molecular & Integrative Physl",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "MSE",
-    "cisName": "Materials Science and Engineering",
-    "grayBookId": "c17-d15",
-    "grayBookName": "Materials Science & Engineerng",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "MUS",
-    "cisName": "Music",
-    "grayBookId": "c14-d9",
-    "grayBookName": "Music",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "NEUR",
-    "cisName": "Neuroscience",
-    "grayBookId": "c20-d45",
-    "grayBookName": "Neuroscience Program",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "NPRE",
-    "cisName": "Nuclear, Plasma, and Radiological Engineering",
-    "grayBookId": "c17-d18",
-    "grayBookName": "Nuclear, Plasma, & Rad Engr",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "NRES",
-    "cisName": "Natural Resources and Environmental Sciences",
     "grayBookId": "c1-d12",
     "grayBookName": "Natural Res & Env Sci",
-    "matchScore": 1,
+    "cisSubjects": [
+      "NRES"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "NUTR",
-    "cisName": "Nutritional Sciences",
-    "grayBookId": "c1-d13",
-    "grayBookName": "Nutritional Sciences",
-    "matchScore": 1,
+    "grayBookId": "c2-d5",
+    "grayBookName": "Health and Kinesiology",
+    "cisSubjects": [
+      "HK"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "PHIL",
-    "cisName": "Philosophy",
-    "grayBookId": "c20-d46",
-    "grayBookName": "Philosophy",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "PHYS",
-    "cisName": "Physics",
-    "grayBookId": "c17-d19",
-    "grayBookName": "Physics",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "PS",
-    "cisName": "Political Science",
-    "grayBookId": "c20-d48",
-    "grayBookName": "Political Science",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "PSYC",
-    "cisName": "Psychology",
-    "grayBookId": "c20-d51",
-    "grayBookName": "Psychology",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "REL",
-    "cisName": "Religion",
-    "grayBookId": "c20-d52",
-    "grayBookName": "Religion",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "RST",
-    "cisName": "Recreation, Sport, and Tourism",
     "grayBookId": "c2-d6",
     "grayBookName": "Recreation, Sport and Tourism",
-    "matchScore": 1,
+    "cisSubjects": [
+      "RST"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "SHS",
-    "cisName": "Speech and Hearing Science",
     "grayBookId": "c2-d7",
     "grayBookName": "Speech & Hearing Science",
-    "matchScore": 1,
+    "cisSubjects": [
+      "SHS"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "SLCL",
-    "cisName": "Literatures, Cultures, and Linguistics",
-    "grayBookId": "c20-d59",
-    "grayBookName": "Slavic Languages & Literature",
-    "matchScore": 1,
+    "grayBookId": "c8-d1",
+    "grayBookName": "Advertising",
+    "cisSubjects": [
+      "ADV"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "SOC",
-    "cisName": "Sociology",
-    "grayBookId": "c20-d60",
-    "grayBookName": "Sociology",
-    "matchScore": 1,
+    "grayBookId": "c8-d10",
+    "grayBookName": "Journalism",
+    "cisSubjects": [
+      "JOUR"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "SOCW",
-    "cisName": "Social Work",
-    "grayBookId": "c27-d1",
-    "grayBookName": "School of Social Work",
-    "matchScore": 1,
+    "grayBookId": "c8-d11",
+    "grayBookName": "Media and Cinema Studies",
+    "cisSubjects": [
+      "MACS"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "SPAN",
-    "cisName": "Spanish",
-    "grayBookId": "c20-d61",
-    "grayBookName": "Spanish and Portuguese",
-    "matchScore": 1,
+    "grayBookId": "c11-d4",
+    "grayBookName": "Curriculum and Instruction",
+    "cisSubjects": [
+      "CI"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "SPED",
-    "cisName": "Special Education",
+    "grayBookId": "c11-d5",
+    "grayBookName": "Educ Policy, Orgzn & Leadrshp",
+    "cisSubjects": [
+      "EPOL"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c11-d7",
+    "grayBookName": "Educational Psychology",
+    "cisSubjects": [
+      "EPSY"
+    ],
+    "matchMethod": "manual"
+  },
+  {
     "grayBookId": "c11-d8",
     "grayBookName": "Special Education",
-    "matchScore": 1,
+    "cisSubjects": [
+      "SPED"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "STAT",
-    "cisName": "Statistics",
-    "grayBookId": "c20-d63",
-    "grayBookName": "Statistics",
-    "matchScore": 1,
+    "grayBookId": "c14-d1",
+    "grayBookName": "Architecture",
+    "cisSubjects": [
+      "ARCH"
+    ],
     "matchMethod": "manual"
   },
   {
-    "cisSubject": "THEA",
-    "cisName": "Theatre",
-    "grayBookId": "c14-d10",
-    "grayBookName": "Theatre",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "UP",
-    "cisName": "Urban and Regional Planning",
-    "grayBookId": "c14-d11",
-    "grayBookName": "Urban & Regional Planning",
-    "matchScore": 1,
-    "matchMethod": "manual"
-  },
-  {
-    "cisSubject": "AAS",
-    "cisName": "Asian American Studies",
-    "grayBookId": "c20-d6",
-    "grayBookName": "Asian American Studies",
-    "matchScore": 1,
-    "matchMethod": "auto"
-  },
-  {
-    "cisSubject": "ACES",
-    "cisName": "Agricultural, Consumer and Environmental Sciences",
-    "grayBookId": "c1-d5",
-    "grayBookName": "Agr, Consumer & Env Sci Admn",
-    "matchScore": 0.5,
-    "matchMethod": "auto"
-  },
-  {
-    "cisSubject": "AFST",
-    "cisName": "African Studies",
-    "grayBookId": "c20-d11",
-    "grayBookName": "Center for African Studies",
-    "matchScore": 0.6666666666666666,
-    "matchMethod": "auto"
-  },
-  {
-    "cisSubject": "AHS",
-    "cisName": "Applied Health Sciences Courses",
-    "grayBookId": "c2-d1",
-    "grayBookName": "Applied Health Sciences Admin",
-    "matchScore": 0.6,
-    "matchMethod": "auto"
-  },
-  {
-    "cisSubject": "AIS",
-    "cisName": "American Indian Studies",
-    "grayBookId": "c20-d3",
-    "grayBookName": "American Indian Studies Prgrm",
-    "matchScore": 0.75,
-    "matchMethod": "auto"
-  },
-  {
-    "cisSubject": "ART",
-    "cisName": "Art",
     "grayBookId": "c14-d2",
     "grayBookName": "Art & Design",
-    "matchScore": 0.5,
-    "matchMethod": "auto"
+    "cisSubjects": [
+      "ART",
+      "ARTD",
+      "ARTE",
+      "ARTF",
+      "ARTH",
+      "ARTJ",
+      "ARTS"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "ASST",
-    "cisName": "Asian Studies",
-    "grayBookId": "c20-d21",
-    "grayBookName": "Ctr S. Asian & MidEast Studies",
-    "matchScore": 0.5,
-    "matchMethod": "auto"
+    "grayBookId": "c14-d3",
+    "grayBookName": "Dance",
+    "cisSubjects": [
+      "DANC"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "BIOC",
-    "cisName": "Biochemistry",
+    "grayBookId": "c14-d8",
+    "grayBookName": "Landscape Architecture",
+    "cisSubjects": [
+      "LA"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c14-d9",
+    "grayBookName": "Music",
+    "cisSubjects": [
+      "MUS",
+      "MUSC"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c14-d10",
+    "grayBookName": "Theatre",
+    "cisSubjects": [
+      "THEA"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c14-d11",
+    "grayBookName": "Urban & Regional Planning",
+    "cisSubjects": [
+      "UP"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c15-d1",
+    "grayBookName": "Accountancy",
+    "cisSubjects": [
+      "ACCY"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c15-d2",
+    "grayBookName": "Business Administration",
+    "cisSubjects": [
+      "BADM",
+      "BDI"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c15-d6",
+    "grayBookName": "Finance",
+    "cisSubjects": [
+      "FIN"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c17-d1",
+    "grayBookName": "Aerospace Engineering",
+    "cisSubjects": [
+      "AE"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c17-d3",
+    "grayBookName": "Bioengineering",
+    "cisSubjects": [
+      "BIOE"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c17-d4",
+    "grayBookName": "Civil & Environmental Eng",
+    "cisSubjects": [
+      "CEE"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c17-d7",
+    "grayBookName": "Electrical & Computer Eng",
+    "cisSubjects": [
+      "ECE"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c17-d12",
+    "grayBookName": "Industrial&Enterprise Sys Eng",
+    "cisSubjects": [
+      "IE",
+      "SE"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c17-d15",
+    "grayBookName": "Materials Science & Engineerng",
+    "cisSubjects": [
+      "MSE"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c17-d16",
+    "grayBookName": "Mechanical Sci & Engineering",
+    "cisSubjects": [
+      "ME",
+      "TAM"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c17-d18",
+    "grayBookName": "Nuclear, Plasma, & Rad Engr",
+    "cisSubjects": [
+      "NPRE"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c17-d19",
+    "grayBookName": "Physics",
+    "cisSubjects": [
+      "PHYS"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c17-d21",
+    "grayBookName": "Siebel School Comp & Data Sci",
+    "cisSubjects": [
+      "CS"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c17-d22",
+    "grayBookName": "Technology Entrepreneur Ctr",
+    "cisSubjects": [
+      "TE"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c19-d1",
+    "grayBookName": "Law",
+    "cisSubjects": [
+      "LAW"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d1",
+    "grayBookName": "Actuarial Sci and Risk Mgmt",
+    "cisSubjects": [
+      "ASRM"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d2",
+    "grayBookName": "African American Studies",
+    "cisSubjects": [
+      "AFRO"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d3",
+    "grayBookName": "American Indian Studies Prgrm",
+    "cisSubjects": [
+      "AIS"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d4",
+    "grayBookName": "Anthropology",
+    "cisSubjects": [
+      "ANTH"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d6",
+    "grayBookName": "Asian American Studies",
+    "cisSubjects": [
+      "AAS"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d7",
+    "grayBookName": "Astronomy",
+    "cisSubjects": [
+      "ASTR"
+    ],
+    "matchMethod": "manual"
+  },
+  {
     "grayBookId": "c20-d8",
     "grayBookName": "Biochemistry",
-    "matchScore": 1,
-    "matchMethod": "auto"
+    "cisSubjects": [
+      "BIOC"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "BUS",
-    "cisName": "Business",
-    "grayBookId": "c15-d10",
-    "grayBookName": "Gies College of Business",
-    "matchScore": 0.5,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d10",
+    "grayBookName": "Cell & Developmental Biology",
+    "cisSubjects": [
+      "CDB"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "CAS",
-    "cisName": "Center for Advanced Study",
-    "grayBookId": "c23-d3",
-    "grayBookName": "Center for Advanced Study",
-    "matchScore": 1,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d14",
+    "grayBookName": "Chemical & Biomolecular Engr",
+    "cisSubjects": [
+      "CHBE"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "CB",
-    "cisName": "Comparative Biosciences",
-    "grayBookId": "c33-d2",
-    "grayBookName": "Comparative Biosciences",
-    "matchScore": 1,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d15",
+    "grayBookName": "Chemistry",
+    "cisSubjects": [
+      "CHEM"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "CGGE",
-    "cisName": "Study of Global Gender Equity",
-    "grayBookId": "c20-d64",
-    "grayBookName": "Study of Global Gender Equity",
-    "matchScore": 1,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d16",
+    "grayBookName": "Classics",
+    "cisSubjects": [
+      "CLCV",
+      "GRK",
+      "LAT"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "CHP",
-    "cisName": "Campus Honors Program Courses",
-    "grayBookId": "c23-d2",
-    "grayBookName": "Campus Honors Program",
-    "matchScore": 0.6666666666666666,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d17",
+    "grayBookName": "Climate Meteorology & Atm Sci",
+    "cisSubjects": [
+      "ATMS"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "CLE",
-    "cisName": "Clinical Sciences and Engineering",
-    "grayBookId": "c5-d3",
-    "grayBookName": "Clinical Sciences",
-    "matchScore": 0.6666666666666666,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d19",
+    "grayBookName": "Communication",
+    "cisSubjects": [
+      "CMN"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "CSE",
-    "cisName": "Computational Science and Engineering",
-    "grayBookId": "c17-d5",
-    "grayBookName": "Computational Science & Engr",
-    "matchScore": 1,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d20",
+    "grayBookName": "Comparative & World Literature",
+    "cisSubjects": [
+      "CWL"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "EDUC",
-    "cisName": "Education",
-    "grayBookId": "c11-d6",
-    "grayBookName": "Education Administration",
-    "matchScore": 0.5,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d23",
+    "grayBookName": "E. Asian Languages & Cultures",
+    "cisSubjects": [
+      "EALC",
+      "CHIN",
+      "JAPN",
+      "KOR"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "ENG",
-    "cisName": "Engineering",
-    "grayBookId": "c17-d8",
-    "grayBookName": "Engineering Administration",
-    "matchScore": 0.5,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d24",
+    "grayBookName": "Earth Sci & Environmental Chng",
+    "cisSubjects": [
+      "GEOL",
+      "ESE"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "EURO",
-    "cisName": "European Union Studies",
-    "grayBookId": "c20-d28",
-    "grayBookName": "European Union Center",
-    "matchScore": 0.5,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d25",
+    "grayBookName": "Economics",
+    "cisSubjects": [
+      "ECON"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "FAA",
-    "cisName": "Fine and Applied Arts",
-    "grayBookId": "c14-d4",
-    "grayBookName": "Fine & Applied Arts Admin",
-    "matchScore": 0.75,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d26",
+    "grayBookName": "English",
+    "cisSubjects": [
+      "ENGL",
+      "CW",
+      "RHET"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "GC",
-    "cisName": "Graduate College",
-    "grayBookId": "c16-d1",
-    "grayBookName": "Graduate Admin",
-    "matchScore": 0.5,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d27",
+    "grayBookName": "Entomology",
+    "cisSubjects": [
+      "ENT"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "GLBL",
-    "cisName": "Global Studies",
-    "grayBookId": "c20-d12",
-    "grayBookName": "Center for Global Studies",
-    "matchScore": 0.6666666666666666,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d29",
+    "grayBookName": "Evolution Ecology Behavior",
+    "cisSubjects": [
+      "IB"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "LAST",
-    "cisName": "Latin American and Caribbean Studies",
+    "grayBookId": "c20-d30",
+    "grayBookName": "French and Italian",
+    "cisSubjects": [
+      "FR",
+      "ITAL"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d31",
+    "grayBookName": "Gender and Women's Studies",
+    "cisSubjects": [
+      "GWS"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d32",
+    "grayBookName": "Geography & GIS",
+    "cisSubjects": [
+      "GGIS"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d33",
+    "grayBookName": "Germanic Languages & Lit",
+    "cisSubjects": [
+      "GER",
+      "SCAN"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d34",
+    "grayBookName": "Global Studies Prog & Courses",
+    "cisSubjects": [
+      "GLBL"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d35",
+    "grayBookName": "History",
+    "cisSubjects": [
+      "HIST"
+    ],
+    "matchMethod": "manual"
+  },
+  {
     "grayBookId": "c20-d38",
     "grayBookName": "Latin American & Carib Studies",
-    "matchScore": 0.6,
-    "matchMethod": "auto"
+    "cisSubjects": [
+      "LAST"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "LLS",
-    "cisName": "Latina/Latino Studies",
     "grayBookId": "c20-d39",
     "grayBookName": "Latina/Latino Studies",
-    "matchScore": 1,
-    "matchMethod": "auto"
+    "cisSubjects": [
+      "LLS"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "MDIA",
-    "cisName": "Media",
-    "grayBookId": "c8-d2",
-    "grayBookName": "College of Media Admin",
-    "matchScore": 0.5,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d41",
+    "grayBookName": "Linguistics",
+    "cisSubjects": [
+      "LING",
+      "EIL",
+      "ESL"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "MDVL",
-    "cisName": "Medieval Studies",
-    "grayBookId": "c20-d50",
-    "grayBookName": "Program in Medieval Studies",
-    "matchScore": 1,
-    "matchMethod": "auto"
+    "grayBookId": "c20-d42",
+    "grayBookName": "Mathematics",
+    "cisSubjects": [
+      "MATH"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "PATH",
-    "cisName": "Pathobiology",
+    "grayBookId": "c20-d43",
+    "grayBookName": "Microbiology",
+    "cisSubjects": [
+      "MICR"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d44",
+    "grayBookName": "Molecular & Integrative Physl",
+    "cisSubjects": [
+      "MIP"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d45",
+    "grayBookName": "Neuroscience Program",
+    "cisSubjects": [
+      "NEUR"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d46",
+    "grayBookName": "Philosophy",
+    "cisSubjects": [
+      "PHIL"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d48",
+    "grayBookName": "Political Science",
+    "cisSubjects": [
+      "PS"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d51",
+    "grayBookName": "Psychology",
+    "cisSubjects": [
+      "PSYC"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d52",
+    "grayBookName": "Religion",
+    "cisSubjects": [
+      "REL"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d59",
+    "grayBookName": "Slavic Languages & Literature",
+    "cisSubjects": [
+      "SLAV",
+      "RUSS",
+      "POL",
+      "CZE",
+      "BCS"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d60",
+    "grayBookName": "Sociology",
+    "cisSubjects": [
+      "SOC"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d61",
+    "grayBookName": "Spanish and Portuguese",
+    "cisSubjects": [
+      "SPAN",
+      "PORT"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d63",
+    "grayBookName": "Statistics",
+    "cisSubjects": [
+      "STAT"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c20-d66",
+    "grayBookName": "Translation & Interpreting St",
+    "cisSubjects": [
+      "TRST"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c25-d1",
+    "grayBookName": "Informatics",
+    "cisSubjects": [
+      "INFO"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c25-d2",
+    "grayBookName": "Information Sciences",
+    "cisSubjects": [
+      "IS"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c26-d1",
+    "grayBookName": "School of Labor & Empl. Rel.",
+    "cisSubjects": [
+      "LER"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c27-d1",
+    "grayBookName": "School of Social Work",
+    "cisSubjects": [
+      "SOCW"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c33-d2",
+    "grayBookName": "Comparative Biosciences",
+    "cisSubjects": [
+      "CB"
+    ],
+    "matchMethod": "manual"
+  },
+  {
     "grayBookId": "c33-d4",
     "grayBookName": "Pathobiology",
-    "matchScore": 1,
-    "matchMethod": "auto"
+    "cisSubjects": [
+      "PATH"
+    ],
+    "matchMethod": "manual"
   },
   {
-    "cisSubject": "VCM",
-    "cisName": "Veterinary Clinical Medicine",
     "grayBookId": "c33-d5",
     "grayBookName": "Vet Clinical Medicine",
-    "matchScore": 0.5,
+    "cisSubjects": [
+      "VCM",
+      "VM"
+    ],
+    "matchMethod": "manual"
+  },
+  {
+    "grayBookId": "c1-d5",
+    "grayBookName": "Agr, Consumer & Env Sci Admn",
+    "cisSubjects": [
+      "ACES"
+    ],
     "matchMethod": "auto"
   },
   {
-    "cisSubject": "WRIT",
-    "cisName": "Writing Studies",
+    "grayBookId": "c1-d13",
+    "grayBookName": "Nutritional Sciences",
+    "cisSubjects": [
+      "NUTR"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c2-d1",
+    "grayBookName": "Applied Health Sciences Admin",
+    "cisSubjects": [
+      "AHS"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c5-d3",
+    "grayBookName": "Clinical Sciences",
+    "cisSubjects": [
+      "CLE"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c8-d2",
+    "grayBookName": "College of Media Admin",
+    "cisSubjects": [
+      "MDIA"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c11-d6",
+    "grayBookName": "Education Administration",
+    "cisSubjects": [
+      "EDUC"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c14-d4",
+    "grayBookName": "Fine & Applied Arts Admin",
+    "cisSubjects": [
+      "FAA"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c15-d10",
+    "grayBookName": "Gies College of Business",
+    "cisSubjects": [
+      "BUS"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c16-d1",
+    "grayBookName": "Graduate Admin",
+    "cisSubjects": [
+      "GC"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c17-d5",
+    "grayBookName": "Computational Science & Engr",
+    "cisSubjects": [
+      "CSE"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c17-d8",
+    "grayBookName": "Engineering Administration",
+    "cisSubjects": [
+      "ENG"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c20-d11",
+    "grayBookName": "Center for African Studies",
+    "cisSubjects": [
+      "AFST"
+    ],
+    "matchMethod": "auto"
+  },
+  {
     "grayBookId": "c20-d13",
     "grayBookName": "Center for Writing Studies",
-    "matchScore": 0.6666666666666666,
+    "cisSubjects": [
+      "WRIT"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c20-d21",
+    "grayBookName": "Ctr S. Asian & MidEast Studies",
+    "cisSubjects": [
+      "ASST"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c20-d28",
+    "grayBookName": "European Union Center",
+    "cisSubjects": [
+      "EURO"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c20-d50",
+    "grayBookName": "Program in Medieval Studies",
+    "cisSubjects": [
+      "MDVL"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c20-d58",
+    "grayBookName": "School of Molecular & Cell Bio",
+    "cisSubjects": [
+      "MCB"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c20-d64",
+    "grayBookName": "Study of Global Gender Equity",
+    "cisSubjects": [
+      "CGGE"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c23-d2",
+    "grayBookName": "Campus Honors Program",
+    "cisSubjects": [
+      "CHP"
+    ],
+    "matchMethod": "auto"
+  },
+  {
+    "grayBookId": "c23-d3",
+    "grayBookName": "Center for Advanced Study",
+    "cisSubjects": [
+      "CAS"
+    ],
     "matchMethod": "auto"
   }
 ]

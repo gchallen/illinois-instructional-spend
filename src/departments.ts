@@ -6,109 +6,127 @@ import { getAllGrayBookDepartments, type GrayBookDepartment } from "./salaries"
 const MAPPING_FILE = resolve(import.meta.dir, "../department-mapping.json")
 
 export interface DepartmentMapping {
-  cisSubject: string
-  cisName: string
   grayBookId: string
   grayBookName: string
-  matchScore: number
+  cisSubjects: string[]
   matchMethod: string
 }
 
-const MANUAL_OVERRIDES: Record<string, string> = {
+/**
+ * Grey Book department → CIS subject codes (one-to-many).
+ * This is the authoritative mapping of which CIS subjects belong to each Grey Book department.
+ */
+const MANUAL_MAPPINGS: Record<string, string[]> = {
   // Engineering (c17)
-  CS: "c17-d21",   // Siebel School Comp & Data Sci
-  ECE: "c17-d7",   // Electrical & Computer Eng
-  ME: "c17-d16",   // Mechanical Sci & Engineering
-  AE: "c17-d1",    // Aerospace Engineering
-  CEE: "c17-d4",   // Civil & Environmental Eng
-  MSE: "c17-d15",  // Materials Science & Engineerng
-  IE: "c17-d12",   // Industrial&Enterprise Sys Eng
-  NPRE: "c17-d18", // Nuclear, Plasma, & Rad Engr
-  BIOE: "c17-d3",  // Bioengineering
-  PHYS: "c17-d19", // Physics
+  "c17-d1": ["AE"],                    // Aerospace Engineering
+  "c17-d3": ["BIOE"],                  // Bioengineering
+  "c17-d4": ["CEE"],                   // Civil & Environmental Eng
+  "c17-d7": ["ECE"],                   // Electrical & Computer Eng
+  "c17-d12": ["IE", "SE"],             // Industrial&Enterprise Sys Eng
+  "c17-d15": ["MSE"],                  // Materials Science & Engineerng
+  "c17-d16": ["ME", "TAM"],            // Mechanical Sci & Engineering
+  "c17-d18": ["NPRE"],                 // Nuclear, Plasma, & Rad Engr
+  "c17-d19": ["PHYS"],                 // Physics
+  "c17-d21": ["CS"],                   // Siebel School Comp & Data Sci
+  "c17-d22": ["TE"],                   // Technology Entrepreneur Ctr
 
-  // LAS Sciences (c20)
-  MATH: "c20-d42",  // Mathematics
-  STAT: "c20-d63",  // Statistics
-  CHEM: "c20-d15",  // Chemistry
-  CHBE: "c20-d14",  // Chemical & Biomolecular Engr
-  ECON: "c20-d25",  // Economics
-  PSYC: "c20-d51",  // Psychology
-  SOC: "c20-d60",   // Sociology
-  HIST: "c20-d35",  // History
-  PHIL: "c20-d46",  // Philosophy
-  PS: "c20-d48",    // Political Science
-  ENGL: "c20-d26",  // English
-  LING: "c20-d41",  // Linguistics
-  ANTH: "c20-d4",   // Anthropology
-  SPAN: "c20-d61",  // Spanish and Portuguese
-  FR: "c20-d30",    // French and Italian
-  GER: "c20-d33",   // Germanic Languages & Lit
-  MCB: "c20-d58",   // School of Molecular & Cell Bio
-  IB: "c20-d57",    // School of Integrative Biology
-  MIP: "c20-d44",   // Molecular & Integrative Physl
-  MICR: "c20-d43",  // Microbiology
-  ASTR: "c20-d7",   // Astronomy
-  ATMS: "c20-d17",  // Climate Meteorology & Atm Sci
-  GGIS: "c20-d32",  // Geography & GIS
-  GEOL: "c20-d24",  // Earth Sci & Environmental Chng
-  CMN: "c20-d19",   // Communication
-  AFRO: "c20-d2",   // African American Studies
-  GWS: "c20-d31",   // Gender and Women's Studies
-  EALC: "c20-d23",  // E. Asian Languages & Cultures
-  REL: "c20-d52",   // Religion
-  CDB: "c20-d10",   // Cell & Developmental Biology
-  ENT: "c20-d27",   // Entomology
-  ASRM: "c20-d1",   // Actuarial Sci and Risk Mgmt
-  CWL: "c20-d20",   // Comparative & World Literature
-  NEUR: "c20-d45",  // Neuroscience Program
-  SLCL: "c20-d59",  // Slavic Languages & Literature
+  // LAS (c20)
+  "c20-d1": ["ASRM"],                  // Actuarial Sci and Risk Mgmt
+  "c20-d2": ["AFRO"],                  // African American Studies
+  "c20-d3": ["AIS"],                   // American Indian Studies Prgrm
+  "c20-d4": ["ANTH"],                  // Anthropology
+  "c20-d6": ["AAS"],                   // Asian American Studies
+  "c20-d7": ["ASTR"],                  // Astronomy
+  "c20-d8": ["BIOC"],                  // Biochemistry
+  "c20-d10": ["CDB"],                  // Cell & Developmental Biology
+  "c20-d14": ["CHBE"],                 // Chemical & Biomolecular Engr
+  "c20-d15": ["CHEM"],                 // Chemistry
+  "c20-d16": ["CLCV", "GRK", "LAT"],  // Classics
+  "c20-d17": ["ATMS"],                 // Climate Meteorology & Atm Sci
+  "c20-d19": ["CMN"],                  // Communication
+  "c20-d20": ["CWL"],                  // Comparative & World Literature
+  "c20-d23": ["EALC", "CHIN", "JAPN", "KOR"], // E. Asian Languages & Cultures
+  "c20-d24": ["GEOL", "ESE"],          // Earth Sci & Environmental Chng
+  "c20-d25": ["ECON"],                 // Economics
+  "c20-d26": ["ENGL", "CW", "RHET"],   // English
+  "c20-d27": ["ENT"],                  // Entomology
+  "c20-d29": ["IB"],                   // Evolution Ecology Behavior (IB = Integrative Biology)
+  "c20-d30": ["FR", "ITAL"],           // French and Italian
+  "c20-d31": ["GWS"],                  // Gender and Women's Studies
+  "c20-d32": ["GGIS"],                 // Geography & GIS
+  "c20-d33": ["GER", "SCAN"],          // Germanic Languages & Lit
+  "c20-d34": ["GLBL"],                 // Global Studies Prog & Courses
+  "c20-d35": ["HIST"],                 // History
+  "c20-d38": ["LAST"],                 // Latin American & Carib Studies
+  "c20-d39": ["LLS"],                  // Latina/Latino Studies
+  "c20-d41": ["LING", "EIL", "ESL"],   // Linguistics
+  "c20-d42": ["MATH"],                 // Mathematics
+  "c20-d43": ["MICR"],                 // Microbiology
+  "c20-d44": ["MIP"],                  // Molecular & Integrative Physl
+  "c20-d46": ["PHIL"],                 // Philosophy
+  // Plant Biology (c20-d47) — no dedicated CIS subject; faculty teach under IB, CPSC, NRES
+  "c20-d48": ["PS"],                   // Political Science
+  "c20-d51": ["PSYC"],                 // Psychology
+  "c20-d52": ["REL"],                  // Religion
+  "c20-d59": ["SLAV", "RUSS", "POL", "CZE", "BCS"], // Slavic Languages & Literature
+  "c20-d60": ["SOC"],                  // Sociology
+  "c20-d61": ["SPAN", "PORT"],         // Spanish and Portuguese
+  "c20-d63": ["STAT"],                 // Statistics
+  "c20-d66": ["TRST"],                 // Translation & Interpreting St
 
   // ACES (c1)
-  ABE: "c1-d6",    // Agricultural & Biological Engr
-  ANSC: "c1-d7",   // Animal Sciences
-  CPSC: "c1-d9",   // Crop Sciences
-  FSHN: "c1-d10",  // Food Science & Human Nutrition
-  NRES: "c1-d12",  // Natural Res & Env Sci
-  ACE: "c1-d4",    // Agr & Consumer Economics
-  HDFS: "c1-d11",  // Human Dvlpmt & Family Studies
-  NUTR: "c1-d13",  // Nutritional Sciences
+  "c1-d4": ["ACE"],                    // Agr & Consumer Economics
+  "c1-d6": ["ABE"],                    // Agricultural & Biological Engr
+  "c1-d7": ["ANSC"],                   // Animal Sciences
+  "c1-d9": ["CPSC"],                   // Crop Sciences
+  "c1-d10": ["FSHN"],                  // Food Science & Human Nutrition
+  "c1-d11": ["HDFS"],                  // Human Dvlpmt & Family Studies
+  "c1-d12": ["NRES"],                  // Natural Res & Env Sci
 
   // Gies Business (c15)
-  ACCY: "c15-d1",  // Accountancy
-  FIN: "c15-d6",   // Finance
-  BADM: "c15-d2",  // Business Administration
+  "c15-d1": ["ACCY"],                  // Accountancy
+  "c15-d2": ["BADM", "BDI"],           // Business Administration
+  "c15-d6": ["FIN"],                   // Finance
 
   // College of Media (c8)
-  ADV: "c8-d1",    // Advertising
-  JOUR: "c8-d10",  // Journalism
-  MACS: "c8-d11",  // Media and Cinema Studies
+  "c8-d1": ["ADV"],                    // Advertising
+  "c8-d10": ["JOUR"],                  // Journalism
+  "c8-d11": ["MACS"],                  // Media and Cinema Studies
 
   // Fine and Applied Arts (c14)
-  ARCH: "c14-d1",  // Architecture
-  DANC: "c14-d3",  // Dance
-  LA: "c14-d8",    // Landscape Architecture
-  MUS: "c14-d9",   // Music
-  THEA: "c14-d10", // Theatre
-  UP: "c14-d11",   // Urban & Regional Planning
+  "c14-d1": ["ARCH"],                  // Architecture
+  "c14-d2": ["ART", "ARTD", "ARTE", "ARTF", "ARTH", "ARTJ", "ARTS"], // Art & Design
+  "c14-d3": ["DANC"],                  // Dance
+  "c14-d8": ["LA"],                    // Landscape Architecture
+  "c14-d9": ["MUS", "MUSC"],           // Music
+  "c14-d10": ["THEA"],                 // Theatre
+  "c14-d11": ["UP"],                   // Urban & Regional Planning
 
   // Education (c11)
-  CI: "c11-d4",    // Curriculum and Instruction
-  EPOL: "c11-d5",  // Educ Policy, Orgzn & Leadrshp
-  EPSY: "c11-d7",  // Educational Psychology
-  SPED: "c11-d8",  // Special Education
+  "c11-d4": ["CI"],                    // Curriculum and Instruction
+  "c11-d5": ["EPOL"],                  // Educ Policy, Orgzn & Leadrshp
+  "c11-d7": ["EPSY"],                  // Educational Psychology
+  "c11-d8": ["SPED"],                  // Special Education
 
   // Applied Health Sciences (c2)
-  HK: "c2-d5",    // Health and Kinesiology
-  RST: "c2-d6",   // Recreation, Sport and Tourism
-  SHS: "c2-d7",   // Speech & Hearing Science
+  "c2-d5": ["HK"],                     // Health and Kinesiology
+  "c2-d6": ["RST"],                    // Recreation, Sport and Tourism
+  "c2-d7": ["SHS"],                    // Speech & Hearing Science
 
-  // Other colleges
-  LAW: "c19-d1",   // Law
-  IS: "c25-d2",    // Information Sciences
-  INFO: "c25-d1",  // Informatics
-  SOCW: "c27-d1",  // School of Social Work
-  LER: "c26-d1",   // School of Labor & Empl. Rel.
+  // Other
+  "c19-d1": ["LAW"],                   // Law
+  "c25-d1": ["INFO"],                  // Informatics
+  "c25-d2": ["IS"],                    // Information Sciences
+  "c26-d1": ["LER"],                   // School of Labor & Empl. Rel.
+  "c27-d1": ["SOCW"],                  // School of Social Work
+
+  // Vet Med (c33)
+  "c33-d2": ["CB"],                    // Comparative Biosciences
+  "c33-d4": ["PATH"],                  // Pathobiology
+  "c33-d5": ["VCM", "VM"],             // Vet Clinical Medicine
+
+  // AFRO/AFST distinction
+  "c20-d45": ["NEUR"],                 // Neuroscience Program
 }
 
 function normalize(name: string): string {
@@ -164,7 +182,7 @@ export async function loadOrCreateMapping(): Promise<DepartmentMapping[]> {
     return JSON.parse(readFileSync(MAPPING_FILE, "utf-8"))
   }
 
-  console.log("  Auto-generating department mapping...")
+  console.log("  Generating department mapping...")
 
   const cisSubjects = await fetchAllSubjects()
   const grayBookDepts = getAllGrayBookDepartments()
@@ -172,73 +190,68 @@ export async function loadOrCreateMapping(): Promise<DepartmentMapping[]> {
   console.log(`  CIS subjects: ${cisSubjects.length}, Grey Book departments: ${grayBookDepts.length}`)
 
   const mappings: DepartmentMapping[] = []
-  const usedGrayBook = new Set<string>()
-  const unmatchedCIS: CISSubject[] = []
+  const mappedGrayBook = new Set<string>()
 
-  // Apply manual overrides first
-  for (const subject of cisSubjects) {
-    const override = MANUAL_OVERRIDES[subject.code]
-    if (override) {
-      const gbDept = grayBookDepts.find((d) => d.id === override)
-      if (gbDept) {
-        mappings.push({
-          cisSubject: subject.code,
-          cisName: subject.name,
-          grayBookId: gbDept.id,
-          grayBookName: gbDept.name,
-          matchScore: 1.0,
-          matchMethod: "manual",
-        })
-        usedGrayBook.add(gbDept.id)
-      }
+  // Apply manual mappings (Grey Book ID → CIS subjects)
+  for (const dept of grayBookDepts) {
+    const manual = MANUAL_MAPPINGS[dept.id]
+    if (manual) {
+      mappings.push({
+        grayBookId: dept.id,
+        grayBookName: dept.name,
+        cisSubjects: manual,
+        matchMethod: "manual",
+      })
+      mappedGrayBook.add(dept.id)
     }
   }
 
-  // Auto-match remaining by name similarity
-  for (const subject of cisSubjects) {
-    if (MANUAL_OVERRIDES[subject.code]) continue
+  // Auto-match remaining Grey Book departments → CIS subjects by name similarity
+  const usedCIS = new Set<string>()
+  for (const m of mappings) {
+    for (const s of m.cisSubjects) usedCIS.add(s)
+  }
 
-    const subjectTokens = tokenize(subject.name)
+  for (const dept of grayBookDepts) {
+    if (mappedGrayBook.has(dept.id)) continue
+
+    const deptTokens = tokenize(dept.name)
     let bestScore = 0
-    let bestDept: GrayBookDepartment | null = null
+    let bestSubject: CISSubject | null = null
 
-    for (const dept of grayBookDepts) {
-      if (usedGrayBook.has(dept.id)) continue
-      const deptTokens = tokenize(dept.name)
-      const score = jaccardScore(subjectTokens, deptTokens)
+    for (const subject of cisSubjects) {
+      if (usedCIS.has(subject.code)) continue
+      const subjectTokens = tokenize(subject.name)
+      const score = jaccardScore(deptTokens, subjectTokens)
       if (score > bestScore) {
         bestScore = score
-        bestDept = dept
+        bestSubject = subject
       }
     }
 
-    if (bestDept && bestScore > 0.4) {
+    if (bestSubject && bestScore > 0.4) {
       mappings.push({
-        cisSubject: subject.code,
-        cisName: subject.name,
-        grayBookId: bestDept.id,
-        grayBookName: bestDept.name,
-        matchScore: bestScore,
+        grayBookId: dept.id,
+        grayBookName: dept.name,
+        cisSubjects: [bestSubject.code],
         matchMethod: "auto",
       })
-      usedGrayBook.add(bestDept.id)
-    } else {
-      unmatchedCIS.push(subject)
+      mappedGrayBook.add(dept.id)
+      usedCIS.add(bestSubject.code)
     }
   }
 
-  const unmatchedGB = grayBookDepts.filter((d) => !usedGrayBook.has(d.id))
+  const unmappedGB = grayBookDepts.filter((d) => !mappedGrayBook.has(d.id))
 
   console.log(`  Mapped: ${mappings.length} departments`)
-  console.log(`  Unmatched CIS subjects: ${unmatchedCIS.length}`)
-  console.log(`  Unmatched Grey Book departments: ${unmatchedGB.length}`)
+  console.log(`  Unmapped Grey Book departments: ${unmappedGB.length}`)
 
-  if (unmatchedCIS.length > 0) {
-    console.log("\n  Unmatched CIS subjects:")
-    for (const s of unmatchedCIS.slice(0, 20)) {
-      console.log(`    ${s.code} - ${s.name}`)
+  if (unmappedGB.length > 0) {
+    console.log("\n  Unmapped Grey Book departments (no CIS subjects found):")
+    for (const d of unmappedGB.slice(0, 20)) {
+      console.log(`    ${d.id} - ${d.name}`)
     }
-    if (unmatchedCIS.length > 20) console.log(`    ... and ${unmatchedCIS.length - 20} more`)
+    if (unmappedGB.length > 20) console.log(`    ... and ${unmappedGB.length - 20} more`)
   }
 
   writeFileSync(MAPPING_FILE, JSON.stringify(mappings, null, 2))
