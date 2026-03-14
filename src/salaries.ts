@@ -99,11 +99,12 @@ export function processFaculty(members: FacultyMember[]): ProcessedFaculty[] {
         facultyPositions.filter((p) => p.presentSalary > 0).sort((a, b) => b.presentSalary - a.presentSalary)[0] ||
         facultyPositions[0]
 
-      const totalPresentSalary = m.positions.reduce((s, p) => s + p.presentSalary, 0)
-      const totalProposedSalary = m.positions.reduce((s, p) => s + p.proposedSalary, 0)
-      const totalFte = m.positions.reduce((s, p) => s + p.presentFte, 0)
+      const totalPresentSalary = facultyPositions.reduce((s, p) => s + p.presentSalary, 0)
+      const totalProposedSalary = facultyPositions.reduce((s, p) => s + p.proposedSalary, 0)
+      const totalFte = facultyPositions.reduce((s, p) => s + p.presentFte, 0)
 
       if (totalPresentSalary === 0 && totalProposedSalary === 0) return null
+      if (totalFte === 0) return null // Filter endowed chair stipends with no actual appointment
 
       return {
         name: m.name,

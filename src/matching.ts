@@ -1,5 +1,6 @@
 import type { ProcessedFaculty } from "./salaries"
 import type { CISCourse, CISInstructor } from "./cis"
+import type { GPAInstructor } from "./gpa"
 
 export interface MatchedFaculty {
   faculty: ProcessedFaculty
@@ -10,6 +11,13 @@ export interface MatchResult {
   matched: MatchedFaculty[]
   unmatchedFaculty: ProcessedFaculty[]
   unmatchedInstructors: CISInstructor[]
+  nameCollisions: string[]
+  gpaConfirmed: number
+  gpaOnlyInstructors: number
+}
+
+function normalizeLastName(name: string): string {
+  return name.toLowerCase().replace(/-/g, " ").replace(/\s+/g, " ").trim()
 }
 
 function extractNameParts(grayBookName: string): { lastName: string; firstInitial: string } | null {
@@ -17,7 +25,7 @@ function extractNameParts(grayBookName: string): { lastName: string; firstInitia
   const parts = grayBookName.split(",")
   if (parts.length < 2) return null
 
-  const lastName = parts[0].trim().toLowerCase()
+  const lastName = normalizeLastName(parts[0])
   const firstPart = parts[1].trim().split(/\s+/)[0]
   if (!firstPart) return null
 
@@ -27,6 +35,7 @@ function extractNameParts(grayBookName: string): { lastName: string; firstInitia
 export function matchFacultyToCourses(
   faculty: ProcessedFaculty[],
   courses: CISCourse[],
+  gpaLookup?: Map<string, GPAInstructor[]>,
 ): MatchResult {
   const matched: MatchedFaculty[] = []
   const unmatchedFaculty: ProcessedFaculty[] = []
@@ -66,7 +75,7 @@ export function matchFacultyToCourses(
     const coursesTeaching: MatchedFaculty["coursesTeaching"] = []
 
     for (const [key, entry] of allCISInstructors) {
-      const cisLastName = entry.instructor.lastName.toLowerCase()
+      const cisLastName = normalizeLastName(entry.instructor.lastName)
       const cisFirstInitial = entry.instructor.firstName.toLowerCase().charAt(0)
 
       if (cisLastName === nameParts.lastName && cisFirstInitial === nameParts.firstInitial) {
@@ -101,5 +110,45 @@ export function matchFacultyToCourses(
     }
   }
 
-  return { matched, unmatchedFaculty, unmatchedInstructors }
+  // Detect name collisions: Grey Book faculty sharing the same lastName|firstInitial key
+  const nameKeyMap = new Map<string, string[]>()
+  for (const f of faculty) {
+    const parts = extractNameParts(f.name)
+    if (!parts) continue
+    const key = `${parts.lastName}|${parts.firstInitial}`
+    if (!nameKeyMap.has(key)) nameKeyMap.set(key, [])
+    nameKeyMap.get(key)!.push(f.name)
+  }
+  const nameCollisions: string[] = []
+  for (const [key, names] of nameKeyMap) {
+    if (names.length > 1) {
+      nameCollisions.push(`${key}: ${names.join(", ")}`)
+    }
+  }
+
+  // GPA cross-check: validate matches against historical GPA data
+  let gpaConfirmed = 0
+  let gpaOnlyInstructors = 0
+
+  if (gpaLookup && gpaLookup.size > 0) {
+    const matchedKeys = new Set<string>()
+    for (const m of matched) {
+      const parts = extractNameParts(m.faculty.name)
+      if (!parts) continue
+      const key = `${parts.lastName}|${parts.firstInitial}`
+      matchedKeys.add(key)
+      if (gpaLookup.has(key)) {
+        gpaConfirmed++
+      }
+    }
+
+    // Count GPA instructors not matched to any Grey Book faculty
+    for (const key of gpaLookup.keys()) {
+      if (!matchedKeys.has(key)) {
+        gpaOnlyInstructors++
+      }
+    }
+  }
+
+  return { matched, unmatchedFaculty, unmatchedInstructors, nameCollisions, gpaConfirmed, gpaOnlyInstructors }
 }
