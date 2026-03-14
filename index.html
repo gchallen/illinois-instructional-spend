@@ -154,7 +154,7 @@
   <div class="parameters-section">
     <h2>Parameters</h2>
     <div class="param-row">
-      <div class="param-name">Perspective</div>
+      <div class="param-name">Cost Model</div>
       <div class="param-control">
         <span style="font-size:0.8rem;font-weight:600;color:#555">Divided</span>
         <input type="range" id="perspectiveSlider" min="0" max="100" value="50" step="5">
@@ -189,7 +189,7 @@
 
     <div class="insight-panel">
       <h3>Instructional Investment by Enrollment Tier</h3>
-      <p class="insight-takeaway">This chart responds to the <strong>Perspective</strong> parameter above. At $/Student, large-enrollment departments look efficient. At $/Course, the picture reverses. Within every tier, there&rsquo;s a wide spread &mdash; size isn&rsquo;t the whole story.</p>
+      <p class="insight-takeaway">This chart responds to the <strong>Cost Model</strong> parameter above. At $/Student, large-enrollment departments look efficient. At $/Course, the picture reverses. Within every tier, there&rsquo;s a wide spread &mdash; size isn&rsquo;t the whole story.</p>
       <p class="insight-legend" id="perspectiveLegend">Log scale. Each dot = one department. Vertical line = median, triangle = mean.</p>
       <svg id="stripPerspective"></svg>
     </div>
@@ -308,7 +308,7 @@
         <div class="assumption">Assumption: A faculty member&rsquo;s teaching spend is divided equally among the courses they teach. A large lecture and a small seminar by the same professor each receive the same allocation. We don&rsquo;t have data on per-course effort, so equal division is the simplest defensible choice.</div>
       </li>
       <li><strong>Enrollment.</strong> Unique students are counted across all non-excluded sections taught by matched faculty. A student enrolled in multiple sections or courses is counted once per department.</li>
-      <li><strong>Metrics.</strong> The department&rsquo;s total teaching spend (summed across all matched faculty) is divided by either total unique students (Divided perspective) or total courses (Shared perspective), or a blend of both.</li>
+      <li><strong>Metrics.</strong> The department&rsquo;s total teaching spend (summed across all matched faculty) is divided by either total unique students (Divided cost model) or total courses (Shared cost model), or a blend of both.</li>
     </ol>
     <p style="line-height:1.7;margin-bottom:12px">
       If Widget Studies had a second faculty member &mdash; say a lecturer (teaching-focused) earning $80,000 who teaches 3 courses &mdash; her teaching spend at 70% would be $56,000, split $18,667 per course. The department&rsquo;s total teaching spend would be $48,000 + $56,000 = <strong>$104,000</strong>. If the department has 500 unique students, the Divided metric would be $104,000 / 500 = <strong>$208/student</strong>.
@@ -1118,7 +1118,7 @@
 
     function renderParamSummary() {
       var desc = perspectiveDescription(Math.round(perspectiveAlpha * 100));
-      var text = 'Perspective: <strong>' + desc + '</strong> &middot; Teaching-focused: <strong>' + Math.round(teachingPct * 100) + '%</strong> &middot; Research-focused: <strong>' + Math.round(researchPct * 100) + '%</strong>';
+      var text = 'Cost Model: <strong>' + desc + '</strong> &middot; Teaching-focused: <strong>' + Math.round(teachingPct * 100) + '%</strong> &middot; Research-focused: <strong>' + Math.round(researchPct * 100) + '%</strong>';
       var el1 = document.getElementById('paramSummaryTable');
       var el2 = document.getElementById('paramSummaryScatter');
       if (el1) el1.innerHTML = text;
