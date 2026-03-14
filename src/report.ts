@@ -1,6 +1,6 @@
 import { writeFileSync, mkdirSync, existsSync } from "fs"
 import { resolve } from "path"
-import type { DepartmentAnalysis, DataQualityFlags } from "./analysis"
+import type { DepartmentAnalysis } from "./analysis"
 
 const OUTPUT_DIR = resolve(import.meta.dir, "../output")
 
@@ -27,10 +27,10 @@ export function generateReport(results: DepartmentAnalysis[]) {
   const sorted = [...included].filter((r) => r.uniqueStudents > 0).sort((a, b) => b.perStudent - a.perStudent)
 
   // Aggregate stats
-  const totalTeachingSalary = sorted.reduce((s, r) => s + r.matchedTeachingFocusedSalary, 0)
-  const totalResearchSalary = sorted.reduce((s, r) => s + r.matchedResearchFocusedSalary, 0)
+  const totalTeachingSalary = sorted.reduce((s, r) => s + r.totalTeachingFocusedSalary, 0)
+  const totalResearchSalary = sorted.reduce((s, r) => s + r.totalResearchFocusedSalary, 0)
   const totalStudents = sorted.reduce((s, r) => s + r.uniqueStudents, 0)
-  const totalMatchedSalary = sorted.reduce((s, r) => s + r.matchedProposedSalary, 0)
+  const totalSalary = sorted.reduce((s, r) => s + r.totalProposedSalary, 0)
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -84,8 +84,6 @@ export function generateReport(results: DepartmentAnalysis[]) {
 
     .highlight { background: #fef08a; }
     .warning-badge { display: inline-block; font-size: 0.65rem; padding: 1px 5px; border-radius: 3px; margin-left: 4px; font-weight: 600; vertical-align: middle; }
-    .warning-badge.match-rate { background: #fef3c7; color: #92400e; }
-    .warning-badge.low-conf { background: #fee2e2; color: #991b1b; }
     .warning-badge.ldap { background: #ede9fe; color: #5b21b6; }
     .warning-badge.collision { background: #e0e7ff; color: #3730a3; }
     .excluded-section { margin-top: 24px; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -101,7 +99,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
 </head>
 <body>
   <h1>UIUC Instructional Salary Spend Per Student</h1>
-  <div class="subtitle">Spring 2026 — Grey Book Salaries × CIS Course Data × LDAP Enrollment</div>
+  <div class="subtitle">Spring 2026 — Grey Book Faculty Salaries &times; CIS Course Data &times; LDAP Enrollment</div>
 
   <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:16px">
     <div style="background:white;border-radius:8px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;min-width:180px">
@@ -113,8 +111,8 @@ export function generateReport(results: DepartmentAnalysis[]) {
       <div style="font-size:1.3rem;font-weight:700;color:#7c3aed">$${Math.round(totalResearchSalary).toLocaleString()}</div>
     </div>
     <div style="background:white;border-radius:8px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;min-width:180px">
-      <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Total Matched Salary</div>
-      <div style="font-size:1.3rem;font-weight:700;color:#333">$${Math.round(totalMatchedSalary).toLocaleString()}</div>
+      <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Total Faculty Salary</div>
+      <div style="font-size:1.3rem;font-weight:700;color:#333">$${Math.round(totalSalary).toLocaleString()}</div>
     </div>
     <div style="background:white;border-radius:8px;padding:12px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);text-align:center;min-width:180px">
       <div style="font-size:0.75rem;color:#666;text-transform:uppercase;letter-spacing:0.5px">Total Students</div>
@@ -124,16 +122,13 @@ export function generateReport(results: DepartmentAnalysis[]) {
 
   <div class="controls">
     <label for="search">Search:</label>
-    <input type="text" id="search" placeholder="e.g. CS, Computer, Engineering...">
+    <input type="text" id="search" placeholder="e.g. Computer, Engineering, Music...">
 
     <label for="minStudents">Min students:</label>
     <input type="number" id="minStudents" value="0" min="0" style="width:80px">
 
     <label for="minFaculty">Min faculty:</label>
     <input type="number" id="minFaculty" value="0" min="0" style="width:80px">
-
-    <label for="minCourses">Min courses:</label>
-    <input type="number" id="minCourses" value="0" min="0" style="width:80px">
 
     <label>Metric:</label>
     <div class="metric-toggle">
@@ -172,13 +167,12 @@ export function generateReport(results: DepartmentAnalysis[]) {
   <table id="dataTable">
     <thead>
       <tr>
-        <th data-key="cisSubject" data-type="string">Subject <span class="sort-arrow">▾</span></th>
-        <th data-key="cisName" data-type="string">Name <span class="sort-arrow">▾</span></th>
-        <th data-key="matchedFaculty" data-type="number" class="right">Matched <span class="sort-arrow">▾</span></th>
+        <th data-key="grayBookName" data-type="string">Department <span class="sort-arrow">▾</span></th>
+        <th data-key="totalFaculty" data-type="number" class="right">Faculty <span class="sort-arrow">▾</span></th>
         <th data-key="matchRate" data-type="number" class="right">% Teaching <span class="sort-arrow">▾</span></th>
         <th data-key="uniqueStudents" data-type="number" class="right">Students <span class="sort-arrow">▾</span></th>
         <th data-key="courseCount" data-type="number" class="right">Courses <span class="sort-arrow">▾</span></th>
-        <th data-key="matchedProposedSalary" data-type="number" class="right">Matched Salary <span class="sort-arrow">▾</span></th>
+        <th data-key="totalProposedSalary" data-type="number" class="right">Faculty Salary <span class="sort-arrow">▾</span></th>
         <th data-key="computed_spend" data-type="number" class="right sorted">Spend <span class="sort-arrow">▾</span></th>
       </tr>
     </thead>
@@ -189,16 +183,16 @@ export function generateReport(results: DepartmentAnalysis[]) {
   <div class="note">
     Teaching-focused faculty: lecturers, instructors, clinical. Research-focused: tenure-track and research professors.<br>
     Instructional % = estimated share of salary devoted to teaching (adjust with sliders above).<br>
-    Only Grey Book faculty matched to CIS instructors are counted; &ldquo;% Teaching&rdquo; shows what fraction of Grey Book faculty are teaching this semester. Unmatched CIS instructors (TAs, adjuncts) excluded.<br>
+    Instructional spend uses <strong>all</strong> Grey Book faculty salary for the department. Enrollment is counted across all CIS subjects where matched faculty teach.<br>
     Click any row to expand details. Click column headers to sort.<br>
     Generated ${new Date().toISOString().slice(0, 10)}.
   </div>
 
   <div class="excluded-section" id="excludedSection" style="display:none">
     <h2>Excluded Departments</h2>
-    <p style="font-size:0.8rem;color:#888;margin-bottom:12px">These departments were excluded from the main analysis due to data quality issues.</p>
+    <p style="font-size:0.8rem;color:#888;margin-bottom:12px">Grey Book departments with no faculty positions (after filtering) are excluded.</p>
     <table class="excluded-table">
-      <thead><tr><th>Subject</th><th>Name</th><th>Grey Book</th><th>Faculty</th><th>% Teaching</th><th>Students</th><th>Reasons</th></tr></thead>
+      <thead><tr><th>Department</th><th>Grey Book ID</th><th>Faculty</th><th>Students</th><th>Reasons</th></tr></thead>
       <tbody id="excludedBody"></tbody>
     </table>
   </div>
@@ -206,35 +200,26 @@ export function generateReport(results: DepartmentAnalysis[]) {
   <div class="methodology">
     <h2>Methodology</h2>
     <ul>
-      <li><strong>Faculty categories:</strong> Teaching-focused = lecturers, instructors, clinical faculty. Research-focused = tenure-track professors, research professors. Faculty with "other" titles (e.g., administrative) are excluded from instructional spend.</li>
-      <li><strong>Salary &amp; FTE:</strong> The Grey Book already prorates salary by FTE (e.g., a 0.25 FTE professor shows 25% of full salary). Salaries are NOT multiplied by FTE again. Only faculty-class positions (AA/AB/AL/AM) are summed; administrative stipends (BA/BC) and zero-FTE endowed chair supplements are excluded.</li>
-      <li><strong>Split appointments:</strong> The Grey Book lists each department's prorated share separately. There is no cross-department double-counting. A faculty member's salary is attributed to the department where they teach, not where their appointment originates.</li>
+      <li><strong>Approach:</strong> For each Grey Book department, every faculty member is searched against the entire CIS course catalog by name (last name + first initial). Matched faculty&rsquo;s course sections determine enrollment. This means a department&rsquo;s courses are discovered automatically across all CIS subject codes&mdash;no manual department mapping required.</li>
+      <li><strong>Faculty categories:</strong> Teaching-focused = lecturers, instructors, clinical faculty. Research-focused = tenure-track professors, research professors. Faculty with &ldquo;other&rdquo; titles (e.g., administrative) are excluded from instructional spend.</li>
+      <li><strong>Salary &amp; FTE:</strong> Instructional spend uses <strong>all</strong> Grey Book faculty salary for the department, not just those teaching this semester. The Grey Book already prorates salary by FTE. Only faculty-class positions (AA/AB/AL/AM) are summed; administrative stipends (BA/BC) and zero-FTE endowed chair supplements are excluded.</li>
+      <li><strong>Enrollment:</strong> Unique students across all sections taught by matched faculty, regardless of CIS subject code. A student enrolled in multiple sections is counted once per department.</li>
       <li><strong>Credit hours:</strong> Counted per course (not per section). A 3-credit course with 4 sections counts as 3 credit hours, not 12.</li>
-      <li><strong>Variable-credit courses:</strong> The minimum listed credit value is used (e.g., "2 TO 4 hours" counts as 2).</li>
     </ul>
 
     <h2 style="margin-top:20px">Data Quality</h2>
 
-    <h3 style="font-size:0.95rem;margin-top:12px;color:#555">Exclusion Criteria</h3>
-    <ul>
-      <li>Departments with <strong>0% match rate</strong> (no Grey Book faculty matched to CIS instructors) or <strong>fewer than 10 students</strong> are excluded from the main analysis and shown separately below.</li>
-      <li><strong>Administrative units</strong> (e.g., BUS/Gies College of Business, ENG/Engineering Administration, EDUC/Education Administration, ACES, GLBL) are excluded because their Grey Book entries contain only administrative staff, endowed chair stipends (0% FTE), and college-wide positions&mdash;not teaching faculty. Their faculty teach under department-specific subject codes (e.g., Business faculty are in ACCY, BADM, FIN).</li>
-    </ul>
-
     <h3 style="font-size:0.95rem;margin-top:12px;color:#555">Warning Badges</h3>
     <ul>
-      <li><span class="warning-badge match-rate">few teaching</span> Fewer than 50% of Grey Book faculty are teaching this semester. Common in research-heavy departments.</li>
-      <li><span class="warning-badge low-conf">low conf map</span> Department mapping was auto-generated with a similarity score below 0.6. The CIS&ndash;Grey Book pairing may be incorrect.</li>
       <li><span class="warning-badge ldap">LDAP errors</span> More than 10% of enrollment queries failed, so student counts may be understated.</li>
       <li><span class="warning-badge collision">name collision</span> Two or more Grey Book faculty share the same last name and first initial, making it impossible to distinguish who is teaching which section.</li>
     </ul>
 
     <h3 style="font-size:0.95rem;margin-top:12px;color:#555">Known Limitations</h3>
     <ul>
-      <li><strong>Faculty not teaching this semester:</strong> In research-heavy departments, only 25&ndash;75% of Grey Book faculty teach in any given semester. This is expected&mdash;the analysis correctly counts only faculty who ARE teaching. However, it means the &ldquo;match rate&rdquo; reflects teaching load, not data quality. Departments like ENGL (36%), ME (45%), and LING (25%) have many faculty on sabbatical, doing lab/field work, or teaching in alternate semesters.</li>
-      <li><strong>Multi-subject departments:</strong> Some Grey Book departments offer courses under multiple CIS subject codes. For example, &ldquo;Art &amp; Design&rdquo; (c14-d2) courses are split across ART, ARTD, ARTE, ARTF, ARTH, and ARTS, but only ART is mapped. This understates enrollment and overstates per-student costs for these departments. Similarly, &ldquo;Slavic Languages &amp; Literature&rdquo; maps only to SLCL, not the individual language codes.</li>
-      <li><strong>CIS instructors not in Grey Book:</strong> Many CIS-listed instructors are graduate students, adjuncts, or visiting lecturers without Grey Book faculty appointments. Their salaries are not included. This means the analysis captures permanent faculty instructional spend but not total instructional labor costs.</li>
-      <li><strong>Name matching:</strong> Faculty are matched by normalized last name and first initial. Multi-word and hyphenated last names are normalized (hyphens treated as spaces). However, if a name is stored differently across systems (e.g., one uses a middle component of a compound surname), the match may fail. Name collisions (two faculty with same last name + first initial) are flagged but not resolved.</li>
+      <li><strong>Name matching:</strong> Faculty are matched by normalized last name and first initial. Hyphenated/compound last names are normalized. However, if a name is stored differently across systems, the match may fail. Name collisions (two faculty with same last name + first initial) are flagged but not resolved.</li>
+      <li><strong>Non-faculty instructors:</strong> Many CIS-listed instructors are graduate students, adjuncts, or visiting lecturers without Grey Book faculty appointments. Their salaries are not included. This analysis captures permanent faculty instructional spend, not total instructional labor costs.</li>
+      <li><strong>Split appointments:</strong> The Grey Book lists each department&rsquo;s prorated share separately. There is no cross-department double-counting.</li>
     </ul>
   </div>
 
@@ -248,14 +233,13 @@ export function generateReport(results: DepartmentAnalysis[]) {
     let searchTerm = '';
     let minStudents = 0;
     let minFaculty = 0;
-    let minCourses = 0;
     let teachingPct = 0.7;
     let researchPct = 0.3;
-    let expandedSubject = null;
+    let expandedId = null;
     let chart = null;
 
     function computeSpend(r) {
-      return r.matchedTeachingFocusedSalary * teachingPct + r.matchedResearchFocusedSalary * researchPct;
+      return r.totalTeachingFocusedSalary * teachingPct + r.totalResearchFocusedSalary * researchPct;
     }
 
     function computeMetric(r) {
@@ -282,15 +266,13 @@ export function generateReport(results: DepartmentAnalysis[]) {
     function filteredData() {
       let d = DATA.filter(r =>
         r.uniqueStudents >= minStudents &&
-        r.matchedFaculty >= minFaculty &&
-        r.courseCount >= minCourses
+        r.totalFaculty >= minFaculty
       );
       if (searchTerm) {
         const q = searchTerm.toLowerCase();
         d = d.filter(r =>
-          r.cisSubject.toLowerCase().includes(q) ||
-          r.cisName.toLowerCase().includes(q) ||
-          r.grayBookName.toLowerCase().includes(q)
+          r.grayBookName.toLowerCase().includes(q) ||
+          (r.cisSubjects || []).some(s => s.toLowerCase().includes(q))
         );
       }
       const type = sortKey === 'computed_spend' ? 'number' : (document.querySelector('th[data-key="' + sortKey + '"]')?.dataset.type || 'number');
@@ -305,7 +287,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
 
     function renderChart() {
       const d = filteredData();
-      const labels = d.map(r => r.cisSubject);
+      const labels = d.map(r => r.grayBookName.length > 25 ? r.grayBookName.slice(0, 23) + '...' : r.grayBookName);
       const values = d.map(r => Math.round(computeMetric(r)));
 
       const container = document.querySelector('.chart-inner');
@@ -360,30 +342,28 @@ export function generateReport(results: DepartmentAnalysis[]) {
       for (const r of d) {
         const tr = document.createElement('tr');
         tr.style.cursor = 'pointer';
-        tr.dataset.subject = r.cisSubject;
-        if (r.cisSubject === expandedSubject) tr.classList.add('expanded');
+        tr.dataset.id = r.grayBookId;
+        if (r.grayBookId === expandedId) tr.classList.add('expanded');
         const badges = [];
-        if (r.dataQuality?.matchRateWarning) badges.push('<span class="warning-badge match-rate">few teaching</span>');
-        if (r.dataQuality?.lowConfidenceMapping) badges.push('<span class="warning-badge low-conf">low conf map</span>');
         if (r.dataQuality?.ldapFailureRate > 0.1) badges.push('<span class="warning-badge ldap">LDAP errors</span>');
         if (r.dataQuality?.nameCollisions?.length > 0) badges.push('<span class="warning-badge collision">name collision</span>');
+        const subjects = (r.cisSubjects || []).join(', ');
         tr.innerHTML = \`
-          <td><strong>\${r.cisSubject}</strong>\${badges.join('')}</td>
-          <td>\${r.cisName}</td>
-          <td class="right">\${r.matchedFaculty}</td>
+          <td><strong>\${r.grayBookName}</strong>\${badges.join('')}<br><span style="font-size:0.7rem;color:#888">\${subjects}</span></td>
+          <td class="right">\${r.totalFaculty} <span style="color:#888">(\${r.matchedFaculty})</span></td>
           <td class="right">\${fmtPct(r.matchRate)}</td>
           <td class="right">\${r.uniqueStudents.toLocaleString()}</td>
           <td class="right">\${r.courseCount}</td>
-          <td class="right">\${fmt$(r.matchedProposedSalary)}</td>
+          <td class="right">\${fmt$(r.totalProposedSalary)}</td>
           <td class="right">\${fmt$(computeMetric(r))}</td>
         \`;
-        tr.addEventListener('click', () => toggleDetail(r.cisSubject));
+        tr.addEventListener('click', () => toggleDetail(r.grayBookId));
         tbody.appendChild(tr);
 
-        if (r.cisSubject === expandedSubject) {
+        if (r.grayBookId === expandedId) {
           const detailTr = document.createElement('tr');
           detailTr.classList.add('detail-row');
-          detailTr.innerHTML = \`<td colspan="8">\${renderDetail(r)}</td>\`;
+          detailTr.innerHTML = \`<td colspan="7">\${renderDetail(r)}</td>\`;
           tbody.appendChild(detailTr);
         }
       }
@@ -401,16 +381,14 @@ export function generateReport(results: DepartmentAnalysis[]) {
             <dt>Research-focused</dt><dd>\${r.researchFocusedCount}</dd>
             <dt>Total in Grey Book</dt><dd>\${r.totalFaculty}</dd>
             <dt>Matched to CIS</dt><dd>\${r.matchedFaculty} (\${fmtPct(r.matchRate)})</dd>
-            <dt>Unmatched CIS instructors</dt><dd>\${r.unmatchedInstructors}</dd>
           </dl>
         </div>
         <div class="detail-section">
           <h4>Salary</h4>
           <dl>
-            <dt>Total Grey Book salary</dt><dd>\${fmt$(r.totalProposedSalary)}</dd>
-            <dt>Matched salary</dt><dd>\${fmt$(r.matchedProposedSalary)}</dd>
-            <dt>Teaching-focused (matched)</dt><dd>\${fmt$(r.matchedTeachingFocusedSalary)}</dd>
-            <dt>Research-focused (matched)</dt><dd>\${fmt$(r.matchedResearchFocusedSalary)}</dd>
+            <dt>Total faculty salary</dt><dd>\${fmt$(r.totalProposedSalary)}</dd>
+            <dt>Teaching-focused salary</dt><dd>\${fmt$(r.totalTeachingFocusedSalary)}</dd>
+            <dt>Research-focused salary</dt><dd>\${fmt$(r.totalResearchFocusedSalary)}</dd>
             <dt>Instructional spend</dt><dd>\${fmt$(spend)}</dd>
           </dl>
         </div>
@@ -425,20 +403,17 @@ export function generateReport(results: DepartmentAnalysis[]) {
           </dl>
         </div>
         <div class="detail-section">
-          <h4>Mapping &amp; Cross-Check</h4>
+          <h4>Identity</h4>
           <dl>
-            <dt>CIS Subject</dt><dd>\${r.cisSubject}</dd>
-            <dt>Grey Book Dept</dt><dd>\${r.grayBookName}</dd>
             <dt>Grey Book ID</dt><dd>\${r.grayBookId}</dd>
-            <dt>GPA confirmed</dt><dd>\${r.gpaConfirmed}/\${r.matchedFaculty}</dd>
-            <dt>GPA-only instructors</dt><dd>\${r.gpaOnlyInstructors}</dd>
+            <dt>CIS subjects</dt><dd>\${(r.cisSubjects || []).join(', ') || 'none'}</dd>
           </dl>
         </div>
       </div>\`;
     }
 
-    function toggleDetail(subject) {
-      expandedSubject = expandedSubject === subject ? null : subject;
+    function toggleDetail(id) {
+      expandedId = expandedId === id ? null : id;
       renderTable();
     }
 
@@ -454,11 +429,9 @@ export function generateReport(results: DepartmentAnalysis[]) {
       for (const r of EXCLUDED) {
         const tr = document.createElement('tr');
         tr.innerHTML = \`
-          <td>\${r.cisSubject}</td>
-          <td>\${r.cisName}</td>
           <td>\${r.grayBookName}</td>
+          <td>\${r.grayBookId}</td>
           <td class="right">\${r.totalFaculty}</td>
-          <td class="right">\${fmtPct(r.matchRate)}</td>
           <td class="right">\${r.uniqueStudents.toLocaleString()}</td>
           <td>\${(r.dataQuality?.reasons || []).join('; ')}</td>
         \`;
@@ -485,10 +458,6 @@ export function generateReport(results: DepartmentAnalysis[]) {
     });
     document.getElementById('minFaculty').addEventListener('input', e => {
       minFaculty = parseInt(e.target.value) || 0;
-      render();
-    });
-    document.getElementById('minCourses').addEventListener('input', e => {
-      minCourses = parseInt(e.target.value) || 0;
       render();
     });
 

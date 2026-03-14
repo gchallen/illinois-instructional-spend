@@ -1,12 +1,9 @@
 import type { FacultyType } from "./salaries"
-import type { MatchedFaculty, MatchResult } from "./matching"
-import type { CISCourse } from "./cis"
+import type { MatchResult } from "./matching"
 
 export interface DataQualityFlags {
   excluded: boolean
   reasons: string[]
-  matchRateWarning: boolean
-  lowConfidenceMapping: boolean
   ldapFailureRate: number
   nameCollisions: string[]
 }
@@ -23,16 +20,16 @@ export function isResearchFocused(type: FacultyType): boolean {
 }
 
 export interface DepartmentAnalysis {
-  cisSubject: string
-  cisName: string
   grayBookId: string
   grayBookName: string
+
+  /** CIS subjects discovered via faculty matches */
+  cisSubjects: string[]
 
   // Faculty counts
   totalFaculty: number
   matchedFaculty: number
   unmatchedFaculty: number
-  unmatchedInstructors: number
   matchRate: number
 
   // Faculty by category
@@ -43,14 +40,14 @@ export interface DepartmentAnalysis {
   totalProposedSalary: number
   matchedProposedSalary: number
 
-  // Matched salary by category (for frontend recomputation with sliders)
-  matchedTeachingFocusedSalary: number
-  matchedResearchFocusedSalary: number
+  // Total salary by category — all Grey Book faculty (for frontend recomputation with sliders)
+  totalTeachingFocusedSalary: number
+  totalResearchFocusedSalary: number
 
-  // Instructional spend (at default 70/30)
+  // Instructional spend (at default 70/30, using ALL Grey Book faculty)
   instructionalSpend: number
 
-  // Enrollment
+  // Enrollment (across all matched sections, all subjects)
   uniqueStudents: number
   totalCreditHours: number
   courseCount: number
@@ -61,31 +58,21 @@ export interface DepartmentAnalysis {
 
   // Data quality
   dataQuality: DataQualityFlags
-
-  // GPA cross-check
-  gpaConfirmed: number
-  gpaOnlyInstructors: number
 }
 
 const DEFAULT_TEACHING_PCT = 0.7
 const DEFAULT_RESEARCH_PCT = 0.3
 
 export function analyzeDepartment(
-  cisSubject: string,
-  cisName: string,
   grayBookId: string,
   grayBookName: string,
   matchResult: MatchResult,
-  courses: CISCourse[],
   uniqueStudents: number,
+  totalCreditHours: number,
+  courseCount: number,
   options?: {
-    matchScore?: number
-    matchMethod?: string
     ldapFailures?: number
     totalLdapQueries?: number
-    nameCollisions?: string[]
-    gpaConfirmed?: number
-    gpaOnlyInstructors?: number
   },
 ): DepartmentAnalysis {
   const allFaculty = [...matchResult.matched.map((m) => m.faculty), ...matchResult.unmatchedFaculty]
@@ -97,31 +84,22 @@ export function analyzeDepartment(
   const totalProposedSalary = allFaculty.reduce((s, f) => s + f.totalProposedSalary, 0)
   const matchedProposedSalary = matchResult.matched.reduce((s, m) => s + m.faculty.totalProposedSalary, 0)
 
-  // Matched salary by category
-  let matchedTeachingFocusedSalary = 0
-  let matchedResearchFocusedSalary = 0
-  for (const m of matchResult.matched) {
-    if (isTeachingFocused(m.faculty.facultyType)) {
-      matchedTeachingFocusedSalary += m.faculty.totalProposedSalary
-    } else if (isResearchFocused(m.faculty.facultyType)) {
-      matchedResearchFocusedSalary += m.faculty.totalProposedSalary
+  // Total salary by category — all Grey Book faculty
+  let totalTeachingFocusedSalary = 0
+  let totalResearchFocusedSalary = 0
+  for (const f of allFaculty) {
+    if (isTeachingFocused(f.facultyType)) {
+      totalTeachingFocusedSalary += f.totalProposedSalary
+    } else if (isResearchFocused(f.facultyType)) {
+      totalResearchFocusedSalary += f.totalProposedSalary
     }
   }
 
-  // Instructional spend at default fractions
+  // Instructional spend at default fractions — uses ALL Grey Book faculty
   const instructionalSpend =
-    matchedTeachingFocusedSalary * DEFAULT_TEACHING_PCT +
-    matchedResearchFocusedSalary * DEFAULT_RESEARCH_PCT
+    totalTeachingFocusedSalary * DEFAULT_TEACHING_PCT +
+    totalResearchFocusedSalary * DEFAULT_RESEARCH_PCT
 
-  // Credit hours — per course, not per section
-  let totalCreditHours = 0
-  for (const course of courses) {
-    if (course.creditHours) {
-      totalCreditHours += course.creditHours
-    }
-  }
-
-  const courseCount = courses.length
   const matchRate = totalFaculty > 0 ? matchResult.matched.length / totalFaculty : 0
 
   const perStudent = uniqueStudents > 0 ? instructionalSpend / uniqueStudents : 0
@@ -129,51 +107,41 @@ export function analyzeDepartment(
 
   // Data quality flags
   const reasons: string[] = []
-  if (totalFaculty === 0 && uniqueStudents > 0) {
-    reasons.push("Administrative unit — no teaching faculty positions in Grey Book")
+  if (totalFaculty === 0) {
+    reasons.push("No teaching faculty positions in Grey Book")
   } else if (matchRate === 0) {
-    reasons.push("No Grey Book faculty matched to CIS instructors")
+    reasons.push("No Grey Book faculty found teaching in CIS")
   }
   if (uniqueStudents < 10) reasons.push(`Very low enrollment (${uniqueStudents} students)`)
-  const excluded = matchRate === 0 || uniqueStudents < 10
-
-  const matchRateWarning = matchRate > 0 && matchRate < 0.5
-  if (matchRateWarning) reasons.push(`Few faculty teaching this semester (${(matchRate * 100).toFixed(0)}%)`)
-
-  const lowConfidenceMapping = (options?.matchMethod === "auto" && (options?.matchScore ?? 1) < 0.6)
-  if (lowConfidenceMapping) reasons.push(`Low-confidence department mapping (score: ${options?.matchScore?.toFixed(2)})`)
+  const excluded = totalFaculty === 0 || uniqueStudents < 10
 
   const ldapFailures = options?.ldapFailures ?? 0
   const totalLdapQueries = options?.totalLdapQueries ?? 0
   const ldapFailureRate = totalLdapQueries > 0 ? ldapFailures / totalLdapQueries : 0
   if (ldapFailureRate > 0.1) reasons.push(`High LDAP failure rate (${(ldapFailureRate * 100).toFixed(0)}%)`)
 
-  const nameCollisions = options?.nameCollisions ?? []
+  const nameCollisions = matchResult.nameCollisions
   if (nameCollisions.length > 0) reasons.push(`${nameCollisions.length} name collision(s) in matching`)
 
   const dataQuality: DataQualityFlags = {
     excluded,
     reasons,
-    matchRateWarning,
-    lowConfidenceMapping,
     ldapFailureRate,
     nameCollisions,
   }
 
   return {
-    cisSubject,
-    cisName,
     grayBookId,
     grayBookName,
+    cisSubjects: [],
     totalFaculty,
     matchedFaculty: matchResult.matched.length,
     unmatchedFaculty: matchResult.unmatchedFaculty.length,
-    unmatchedInstructors: matchResult.unmatchedInstructors.length,
     matchRate,
     teachingFocusedCount,
     researchFocusedCount,
-    matchedTeachingFocusedSalary,
-    matchedResearchFocusedSalary,
+    totalTeachingFocusedSalary,
+    totalResearchFocusedSalary,
     totalProposedSalary,
     matchedProposedSalary,
     instructionalSpend,
@@ -183,7 +151,5 @@ export function analyzeDepartment(
     perStudent,
     perCreditHour,
     dataQuality,
-    gpaConfirmed: options?.gpaConfirmed ?? 0,
-    gpaOnlyInstructors: options?.gpaOnlyInstructors ?? 0,
   }
 }
