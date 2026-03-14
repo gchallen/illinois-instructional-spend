@@ -6,6 +6,7 @@ import { matchFacultyToCourses } from "./matching"
 import { analyzeDepartment, type DepartmentAnalysis } from "./analysis"
 import { connectLDAP, getEnrollmentForSection, type LDAPClient } from "./ldap"
 import { generateReport } from "./report"
+import { fetchGPAInstructors, buildNameLookup } from "./gpa"
 
 const CONCURRENCY = 8
 
@@ -19,11 +20,17 @@ async function batch<T, R>(items: T[], concurrency: number, fn: (item: T) => Pro
   return results
 }
 
+interface EnrollmentResult {
+  uniqueStudents: number
+  ldapFailures: number
+  totalSections: number
+}
+
 async function getEnrollment(
   client: LDAPClient,
   courses: CISCourse[],
   subject: string,
-): Promise<number> {
+): Promise<EnrollmentResult> {
   const allNetIDs = new Set<string>()
 
   const queries: { number: string; sectionNumber: string; crn: number }[] = []
@@ -34,6 +41,7 @@ async function getEnrollment(
   }
 
   let processed = 0
+  let ldapFailures = 0
   await batch(queries, CONCURRENCY, async (q) => {
     try {
       const netIDs = await getEnrollmentForSection(
@@ -45,7 +53,7 @@ async function getEnrollment(
       )
       for (const id of netIDs) allNetIDs.add(id)
     } catch {
-      // Skip failed sections
+      ldapFailures++
     }
     processed++
     if (processed % 20 === 0 || processed === queries.length) {
@@ -54,7 +62,10 @@ async function getEnrollment(
   })
 
   if (queries.length > 0) console.log()
-  return allNetIDs.size
+  if (ldapFailures > 0) {
+    console.log(`    LDAP failures: ${ldapFailures}/${queries.length} sections`)
+  }
+  return { uniqueStudents: allNetIDs.size, ldapFailures, totalSections: queries.length }
 }
 
 async function main() {
@@ -71,13 +82,18 @@ async function main() {
   const mappings = await loadOrCreateMapping()
   console.log(`  ${mappings.length} departments mapped\n`)
 
-  // Step 2: Connect LDAP
-  console.log("=== Step 2: Connecting to LDAP ===")
+  // Step 2: Load GPA dataset for cross-checking
+  console.log("=== Step 2: GPA Dataset ===")
+  const gpaData = await fetchGPAInstructors()
+  console.log(`  ${gpaData.size} subjects with instructor data\n`)
+
+  // Step 3: Connect LDAP
+  console.log("=== Step 3: Connecting to LDAP ===")
   const client = await connectLDAP(username, password)
   console.log("  Connected.\n")
 
-  // Step 3: Process each department
-  console.log("=== Step 3: Processing departments ===\n")
+  // Step 4: Process each department
+  console.log("=== Step 4: Processing departments ===\n")
   const results: DepartmentAnalysis[] = []
   let deptIndex = 0
 
@@ -113,12 +129,17 @@ async function main() {
     }
 
     // Match faculty to CIS instructors
-    const matchResult = matchFacultyToCourses(faculty, courses)
-    console.log(`    Matched: ${matchResult.matched.length}/${faculty.length} faculty (${(matchResult.matched.length / Math.max(faculty.length, 1) * 100).toFixed(0)}%)`)
+    const gpaLookup = buildNameLookup(gpaData, mapping.cisSubject)
+    const matchResult = matchFacultyToCourses(faculty, courses, gpaLookup)
+    const teachingPct = (matchResult.matched.length / Math.max(faculty.length, 1) * 100).toFixed(0)
+    console.log(`    Teaching: ${matchResult.matched.length}/${faculty.length} faculty (${teachingPct}%)`)
+    if (gpaLookup.size > 0) {
+      console.log(`    GPA cross-check: ${matchResult.gpaConfirmed} confirmed, ${matchResult.gpaOnlyInstructors} GPA-only instructors`)
+    }
 
     // Get enrollment via LDAP
-    const uniqueStudents = await getEnrollment(client, courses, mapping.cisSubject)
-    console.log(`    Students: ${uniqueStudents.toLocaleString()}`)
+    const enrollment = await getEnrollment(client, courses, mapping.cisSubject)
+    console.log(`    Students: ${enrollment.uniqueStudents.toLocaleString()}`)
 
     // Analyze
     const analysis = analyzeDepartment(
@@ -128,27 +149,36 @@ async function main() {
       mapping.grayBookName,
       matchResult,
       courses,
-      uniqueStudents,
+      enrollment.uniqueStudents,
+      {
+        matchScore: mapping.matchScore,
+        matchMethod: mapping.matchMethod,
+        ldapFailures: enrollment.ldapFailures,
+        totalLdapQueries: enrollment.totalSections,
+        nameCollisions: matchResult.nameCollisions,
+        gpaConfirmed: matchResult.gpaConfirmed,
+        gpaOnlyInstructors: matchResult.gpaOnlyInstructors,
+      },
     )
     results.push(analysis)
 
-    if (uniqueStudents > 0) {
-      console.log(`    Spend/student: $${Math.round(analysis.perStudent.realistic).toLocaleString()} (realistic)`)
+    if (enrollment.uniqueStudents > 0) {
+      console.log(`    Spend/student: $${Math.round(analysis.perStudent).toLocaleString()}`)
     }
     console.log()
   }
 
-  // Step 4: Generate report
-  console.log("=== Step 4: Generating report ===")
+  // Step 5: Generate report
+  console.log("=== Step 5: Generating report ===")
   generateReport(results)
 
   // Summary
   const withStudents = results.filter((r) => r.uniqueStudents > 0)
-  const sorted = withStudents.sort((a, b) => b.perStudent.realistic - a.perStudent.realistic)
+  const sorted = withStudents.sort((a, b) => b.perStudent - a.perStudent)
 
-  console.log(`\n=== Top 20 departments by spend per student (realistic) ===\n`)
+  console.log(`\n=== Top 20 departments by spend per student (teaching 70%, research 30%) ===\n`)
   for (const r of sorted.slice(0, 20)) {
-    const spend = `$${Math.round(r.perStudent.realistic).toLocaleString()}`
+    const spend = `$${Math.round(r.perStudent).toLocaleString()}`
     console.log(`  ${r.cisSubject.padEnd(8)} ${spend.padStart(8)} /student  (${r.matchedFaculty} matched, ${r.uniqueStudents.toLocaleString()} students)`)
   }
 
