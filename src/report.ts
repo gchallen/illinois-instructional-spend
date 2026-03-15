@@ -198,7 +198,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
         <div style="flex:1"><strong>Divided:</strong> If a department spends <strong>$X</strong> to run a course and <strong>Y students</strong> take it, each student receives <strong>$X/Y</strong> of instructional investment. Large courses divide the instructional investment.</div>
         <div style="flex:1"><strong>Shared:</strong> If a department spends <strong>$X</strong> to run a course and <strong>Y students</strong> take it, each student receives <strong>$X</strong> of instructional investment. Large courses multiply the instructional investment.</div>
       </div>
-      <div class="param-desc" style="text-align:center;margin-top:4px;color:#666;font-style:italic">The truth is probably somewhere in between. Use the slider above to explore the spectrum.</div>
+      <div class="param-desc" style="text-align:center;margin-top:4px;color:#666;font-style:italic">The truth is probably somewhere in between. The slider above blends the two models using a geometric mean.</div>
     </div>
     <div class="param-row">
       <div class="param-name">Teaching-focused %</div>
