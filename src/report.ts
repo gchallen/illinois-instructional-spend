@@ -118,8 +118,6 @@ export function generateReport(results: DepartmentAnalysis[]) {
     .methodology li { margin-bottom: 4px; }
     .assumption { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 4px 10px; margin: 4px 0; font-size: 0.85rem; color: #92400e; }
 
-    .insights-section { background: white; border-radius: 8px; padding: 24px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px; }
-    .insights-section h2 { font-size: 1.2rem; color: #333; margin-bottom: 20px; max-width: 800px; margin-left: auto; margin-right: auto; padding: 0 28px; }
     .insight-panel { margin-bottom: 28px; }
     .insight-panel:last-of-type { margin-bottom: 12px; }
     .insight-panel h3 { font-size: 1.05rem; color: #1a1a1a; margin-bottom: 2px; font-weight: 700; max-width: 800px; margin-left: auto; margin-right: auto; padding: 0 28px; }
@@ -218,9 +216,13 @@ export function generateReport(results: DepartmentAnalysis[]) {
     </div>
   </div>
 
-  <div class="insights-section" id="insightsSection">
-    <h2>Insights</h2>
+  <div class="tab-nav">
+    <a href="#insights" class="tab-link">Insights</a>
+    <a href="#table" class="tab-link">Table</a>
+    <a href="#scatter" class="tab-link">Scatter Plot</a>
+  </div>
 
+  <div class="tab-content" id="tab-insights">
     <div class="insight-panel">
       <h3>Instructional Investment by Enrollment Tier</h3>
       <p class="insight-takeaway">This chart responds to the <strong>cost model</strong> parameter above. At $/Student, large-enrollment departments look efficient. At $/Course, the picture reverses. Within every tier, there&rsquo;s a wide spread &mdash; size isn&rsquo;t the whole story.</p>
@@ -236,11 +238,6 @@ export function generateReport(results: DepartmentAnalysis[]) {
     </div>
 
     <p class="insight-summary" id="insightSummary"></p>
-  </div>
-
-  <div class="tab-nav">
-    <a href="#table" class="tab-link">Table</a>
-    <a href="#scatter" class="tab-link">Scatter Plot</a>
   </div>
 
   <div class="tab-content" id="tab-table">
@@ -1262,7 +1259,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
 
     // Tab switching
     function switchTab() {
-      var hash = location.hash || '#table';
+      var hash = location.hash || '#insights';
       document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
       document.querySelectorAll('.tab-link').forEach(function(el) { el.classList.remove('active'); });
       var tabId = 'tab-' + hash.slice(1);
@@ -1270,14 +1267,14 @@ export function generateReport(results: DepartmentAnalysis[]) {
       if (tab) {
         tab.classList.add('active');
       } else {
-        document.getElementById('tab-table').classList.add('active');
-        hash = '#table';
+        document.getElementById('tab-insights').classList.add('active');
+        hash = '#insights';
       }
       var link = document.querySelector('.tab-link[href="' + hash + '"]');
       if (link) {
         link.classList.add('active');
       } else {
-        document.querySelector('.tab-link[href="#table"]').classList.add('active');
+        document.querySelector('.tab-link[href="#insights"]').classList.add('active');
       }
       if (hash === '#scatter') renderChart();
     }
