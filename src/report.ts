@@ -157,6 +157,16 @@ export function generateReport(results: DepartmentAnalysis[]) {
     .param-summary strong { color: #333; }
 
     .size-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
+    .compare-chip { display: inline-flex; align-items: center; gap: 4px; background: #e5e7eb; border-radius: 12px; padding: 3px 10px; font-size: 0.8rem; margin: 2px; }
+    .chip-remove { background: none; border: none; cursor: pointer; font-size: 0.85rem; color: #888; padding: 0 2px; line-height: 1; }
+    .chip-remove:hover { color: #c00; }
+    .compare-matrix table { border-collapse: separate; border-spacing: 2px; font-size: 0.8rem; }
+    .compare-col-header { vertical-align: bottom; text-align: center; padding: 6px 4px; }
+    .compare-col-header div { font-weight: 700; font-size: 0.85rem; white-space: nowrap; }
+    .compare-row-header { white-space: nowrap; text-align: left; font-weight: 600; padding: 4px 8px; width: 1px; }
+    .compare-matrix td { text-align: center; padding: 6px 8px; border-radius: 3px; font-weight: 600; font-size: 0.78rem; cursor: default; min-width: 64px; }
+    .diagonal { background: #e5e7eb; color: #333; }
   </style>
 </head>
 <body>
@@ -228,6 +238,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
     <a href="#insights" class="tab-link">Insights</a>
     <a href="#table" class="tab-link">Table</a>
     <a href="#scatter" class="tab-link">Scatter Plot</a>
+    <a href="#compare" class="tab-link">Compare</a>
   </div>
 
   <div class="tab-content" id="tab-insights">
@@ -304,6 +315,22 @@ export function generateReport(results: DepartmentAnalysis[]) {
       <select id="scatterY"></select>
     </div>
     <svg id="scatterPlot"></svg>
+  </div>
+
+  <div class="tab-content" id="tab-compare">
+    <div class="param-summary" id="paramSummaryCompare"></div>
+    <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+      <div style="min-width:240px;max-width:300px">
+        <div style="font-size:0.85rem;font-weight:600;color:#555;margin-bottom:6px">Select departments to compare (max 8):</div>
+        <input type="text" id="compareSearch" placeholder="Filter departments..." style="width:100%;padding:6px 10px;border:1px solid #ddd;border-radius:4px;font-size:0.85rem;margin-bottom:8px">
+        <div id="compareChips" style="margin-bottom:8px"></div>
+        <div id="compareCandidates" style="max-height:400px;overflow-y:auto;border:1px solid #eee;border-radius:4px;padding:4px"></div>
+      </div>
+      <div style="flex:1;min-width:300px">
+        <div id="compareEmpty" style="color:#888;font-size:0.9rem;padding:40px 20px;text-align:center">Select at least 2 departments to see a comparison matrix.</div>
+        <div id="compareMatrix" class="compare-matrix"></div>
+      </div>
+    </div>
   </div>
 
   <div id="tooltip"></div>
@@ -433,6 +460,21 @@ export function generateReport(results: DepartmentAnalysis[]) {
     let perspectiveAlpha = 0.5;
     let currentXAxis = 'uniqueStudents';
     let currentYAxis = 'computed_metric';
+    function deptSlug(name) {
+      return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+    let compareSelected = (function() {
+      var hash = location.hash || '';
+      if (!hash.startsWith('#compare/')) return [];
+      var raw = hash.slice('#compare/'.length);
+      if (!raw) return [];
+      var slugs = raw.split(',');
+      var ids = slugs.map(function(s) {
+        var d = DATA.find(function(d) { return deptSlug(d.grayBookName) === s; });
+        return d ? d.grayBookId : null;
+      }).filter(Boolean);
+      return ids.slice(0, 8);
+    })();
 
     function computeSpend(r) {
       return (r.matchedTeachingFocusedSalary || 0) * teachingPct + (r.matchedResearchFocusedSalary || 0) * researchPct;
@@ -1126,6 +1168,206 @@ export function generateReport(results: DepartmentAnalysis[]) {
       el.innerHTML = text;
     }
 
+    var COMPARE_COLORS = ['#2563eb', '#e84a27', '#059669', '#7c3aed', '#d97706', '#0891b2', '#be185d', '#4f46e5'];
+
+    function deptAbbrevs(names) {
+      var skip = new Set(['&', 'and', 'of', 'the', 'for', 'in', 'a']);
+      var taken = {};
+      var result = [];
+      for (var i = 0; i < names.length; i++) {
+        var words = names[i].split(/[\\s,]+/).filter(function(w) { return w.length > 0 && !skip.has(w.toLowerCase()); });
+        // Build candidates: full acronym first (multi-word), then single letters building up, then extend
+        var candidates = [];
+        var fullAcronym = words.map(function(w) { return w[0].toUpperCase(); }).join('');
+        if (words.length > 1) candidates.push(fullAcronym);
+        var initials = '';
+        for (var w = 0; w < words.length; w++) {
+          initials += words[w][0].toUpperCase();
+          if (candidates.indexOf(initials) === -1) candidates.push(initials);
+        }
+        for (var len = 2; len <= words[0].length; len++) {
+          var c = words[0].slice(0, len).toUpperCase();
+          for (var w2 = 1; w2 < words.length; w2++) c += words[w2][0].toUpperCase();
+          if (candidates.indexOf(c) === -1) candidates.push(c);
+        }
+        var abbrev = candidates[candidates.length - 1];
+        for (var j = 0; j < candidates.length; j++) {
+          if (!taken[candidates[j]]) { abbrev = candidates[j]; break; }
+        }
+        taken[abbrev] = true;
+        result.push(abbrev);
+      }
+      return result;
+    }
+
+    function compareColor(pctDiff) {
+      var clamped = Math.max(-200, Math.min(200, pctDiff));
+      var abs = Math.abs(clamped);
+      var sat = Math.round((abs / 200) * 70);
+      var light = clamped > 0 ? Math.round(95 - (abs / 200) * 55) : Math.round(100 - (abs / 200) * 50);
+      var hue = clamped > 0 ? 150 : 4;
+      return 'hsl(' + hue + ',' + sat + '%,' + light + '%)';
+    }
+
+    function compareTextColor(pctDiff) {
+      return Math.abs(pctDiff) > 120 ? '#fff' : '#333';
+    }
+
+    function syncCompareURL() {
+      if (compareSelected.length > 0) {
+        var slugs = compareSelected.map(function(id) {
+          var d = DATA.find(function(d) { return d.grayBookId === id; });
+          return d ? deptSlug(d.grayBookName) : id;
+        });
+        history.replaceState(null, '', location.pathname + '#compare/' + slugs.join(','));
+      } else {
+        history.replaceState(null, '', location.pathname + '#compare');
+      }
+    }
+
+    function renderCompare() {
+      renderCompareChips();
+      renderCompareCandidates();
+      renderCompareMatrix();
+    }
+
+    function renderCompareChips() {
+      var container = document.getElementById('compareChips');
+      container.innerHTML = '';
+      for (var i = 0; i < compareSelected.length; i++) {
+        var id = compareSelected[i];
+        var r = DATA.find(function(d) { return d.grayBookId === id; });
+        if (!r) continue;
+        var chip = document.createElement('span');
+        chip.className = 'compare-chip';
+        chip.innerHTML = r.grayBookName + ' <button class="chip-remove" data-id="' + id + '">&times;</button>';
+        container.appendChild(chip);
+      }
+      container.querySelectorAll('.chip-remove').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          var rid = btn.dataset.id;
+          compareSelected = compareSelected.filter(function(s) { return s !== rid; });
+          syncCompareURL();
+          renderCompare();
+        });
+      });
+    }
+
+    function renderCompareCandidates() {
+      var container = document.getElementById('compareCandidates');
+      var searchVal = (document.getElementById('compareSearch').value || '').toLowerCase();
+      container.innerHTML = '';
+      var sorted = DATA.slice().sort(function(a, b) { return a.grayBookName.localeCompare(b.grayBookName); });
+      for (var i = 0; i < sorted.length; i++) {
+        var r = sorted[i];
+        if (searchVal && !r.grayBookName.toLowerCase().includes(searchVal) && !(r.cisSubjects || []).some(function(s) { return s.toLowerCase().includes(searchVal); })) continue;
+        var checked = compareSelected.indexOf(r.grayBookId) !== -1;
+        var disabled = !checked && compareSelected.length >= 8;
+        var div = document.createElement('div');
+        div.style.cssText = 'padding:3px 4px;font-size:0.8rem;display:flex;align-items:center;gap:6px;' + (disabled ? 'opacity:0.4;' : '');
+        var cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = checked;
+        cb.disabled = disabled;
+        cb.dataset.id = r.grayBookId;
+        cb.addEventListener('change', function() {
+          var gid = this.dataset.id;
+          if (this.checked) {
+            if (compareSelected.length < 8) compareSelected.push(gid);
+          } else {
+            compareSelected = compareSelected.filter(function(s) { return s !== gid; });
+          }
+          syncCompareURL();
+          renderCompare();
+        });
+        div.appendChild(cb);
+        var label = document.createElement('span');
+        label.textContent = r.grayBookName;
+        div.appendChild(label);
+        var val = document.createElement('span');
+        val.style.cssText = 'margin-left:auto;color:#888;font-size:0.75rem;';
+        val.textContent = fmt$(blendedPerspective(r, perspectiveAlpha));
+        div.appendChild(val);
+        container.appendChild(div);
+      }
+    }
+
+    function renderCompareMatrix() {
+      var matrixEl = document.getElementById('compareMatrix');
+      var emptyEl = document.getElementById('compareEmpty');
+      if (compareSelected.length < 2) {
+        emptyEl.style.display = '';
+        matrixEl.innerHTML = '';
+        return;
+      }
+      emptyEl.style.display = 'none';
+
+      var depts = compareSelected.map(function(id) { return DATA.find(function(d) { return d.grayBookId === id; }); }).filter(Boolean);
+      depts.sort(function(a, b) { return blendedPerspective(b, perspectiveAlpha) - blendedPerspective(a, perspectiveAlpha); });
+
+      var abbrevs = deptAbbrevs(depts.map(function(d) { return d.grayBookName; }));
+      var tooltip = document.getElementById('tooltip');
+      var html = '<table><thead><tr><th style="background:transparent"></th>';
+      for (var c = 0; c < depts.length; c++) {
+        var colColor = COMPARE_COLORS[c % COMPARE_COLORS.length];
+        html += '<th class="compare-col-header" style="background:transparent" title="' + depts[c].grayBookName + '"><div style="color:' + colColor + '">' + abbrevs[c] + '</div></th>';
+      }
+      html += '</tr></thead><tbody>';
+
+      for (var row = 0; row < depts.length; row++) {
+        var rowColor = COMPARE_COLORS[row % COMPARE_COLORS.length];
+        html += '<tr><td class="compare-row-header" style="color:' + rowColor + '">' + depts[row].grayBookName + '</td>';
+        var rowVal = blendedPerspective(depts[row], perspectiveAlpha);
+        for (var col = 0; col < depts.length; col++) {
+          var colVal = blendedPerspective(depts[col], perspectiveAlpha);
+          if (row === col) {
+            html += '<td class="diagonal" data-row="' + row + '" data-col="' + col + '">' + fmt$(rowVal) + '</td>';
+          } else {
+            var pctDiff = colVal > 0 ? ((rowVal - colVal) / colVal) * 100 : 0;
+            var bg = compareColor(pctDiff);
+            var fg = compareTextColor(pctDiff);
+            var sign = pctDiff > 0 ? '+' : '';
+            html += '<td style="background:' + bg + ';color:' + fg + '" data-row="' + row + '" data-col="' + col + '">' + sign + Math.round(pctDiff) + '%</td>';
+          }
+        }
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+      html += '<div style="font-size:0.75rem;color:#888;margin-top:8px;line-height:1.5">Read row vs. column: each cell shows how much <em>more</em> (+) or <em>less</em> (&minus;) the row department spends per student compared to the column department. Diagonal shows absolute $/Student.</div>';
+      matrixEl.innerHTML = html;
+
+      // Add tooltips to cells
+      matrixEl.querySelectorAll('td[data-row]').forEach(function(td) {
+        var ri = parseInt(td.dataset.row);
+        var ci = parseInt(td.dataset.col);
+        td.addEventListener('mouseenter', function(e) {
+          var rDept = depts[ri];
+          var cDept = depts[ci];
+          var rv = blendedPerspective(rDept, perspectiveAlpha);
+          var cv = blendedPerspective(cDept, perspectiveAlpha);
+          if (ri === ci) {
+            tooltip.innerHTML = '<strong>' + rDept.grayBookName + '</strong>' + fmt$(rv) + '/student';
+          } else {
+            var diff = cv > 0 ? ((rv - cv) / cv) * 100 : 0;
+            var absDiff = Math.abs(rv - cv);
+            var dir = diff > 0 ? 'more' : 'less';
+            tooltip.innerHTML = '<strong>' + rDept.grayBookName + ':</strong> ' + fmt$(rv) + '/student<br><strong>' + cDept.grayBookName + ':</strong> ' + fmt$(cv) + '/student<br>' + fmt$(absDiff) + ' ' + dir + ' per student (' + Math.abs(Math.round(diff)) + '%)';
+          }
+          tooltip.style.display = 'block';
+          tooltip.style.left = (e.clientX + 12) + 'px';
+          tooltip.style.top = (e.clientY - 10) + 'px';
+        });
+        td.addEventListener('mousemove', function(e) {
+          tooltip.style.left = (e.clientX + 12) + 'px';
+          tooltip.style.top = (e.clientY - 10) + 'px';
+        });
+        td.addEventListener('mouseleave', function() {
+          tooltip.style.display = 'none';
+        });
+      });
+    }
+
     function renderExcluded() {
       const section = document.getElementById('excludedSection');
       const tbody = document.getElementById('excludedBody');
@@ -1168,8 +1410,10 @@ export function generateReport(results: DepartmentAnalysis[]) {
       var text = 'Cost Model: <strong>' + desc + '</strong> &middot; Teaching-focused: <strong>' + Math.round(teachingPct * 100) + '%</strong> &middot; Research-focused: <strong>' + Math.round(researchPct * 100) + '%</strong>';
       var el1 = document.getElementById('paramSummaryTable');
       var el2 = document.getElementById('paramSummaryScatter');
+      var el3 = document.getElementById('paramSummaryCompare');
       if (el1) el1.innerHTML = text;
       if (el2) el2.innerHTML = text;
+      if (el3) el3.innerHTML = text;
     }
 
     function render() {
@@ -1179,6 +1423,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
       updateSummaryCards();
       renderParamSummary();
       renderExcluded();
+      if (document.getElementById('tab-compare').classList.contains('active')) renderCompare();
     }
 
     // Populate scatter dropdowns
@@ -1277,25 +1522,30 @@ export function generateReport(results: DepartmentAnalysis[]) {
     // Tab switching
     function switchTab() {
       var hash = location.hash || '#insights';
+      var tabName = hash.slice(1).split('/')[0];
       document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
       document.querySelectorAll('.tab-link').forEach(function(el) { el.classList.remove('active'); });
-      var tabId = 'tab-' + hash.slice(1);
-      var tab = document.getElementById(tabId);
+      var tab = document.getElementById('tab-' + tabName);
       if (tab) {
         tab.classList.add('active');
       } else {
         document.getElementById('tab-insights').classList.add('active');
-        hash = '#insights';
+        tabName = 'insights';
       }
-      var link = document.querySelector('.tab-link[href="' + hash + '"]');
+      var link = document.querySelector('.tab-link[href="#' + tabName + '"]');
       if (link) {
         link.classList.add('active');
       } else {
         document.querySelector('.tab-link[href="#insights"]').classList.add('active');
       }
-      if (hash === '#scatter') renderChart();
+      if (tabName === 'scatter') renderChart();
+      if (tabName === 'compare') renderCompare();
     }
     window.addEventListener('hashchange', switchTab);
+
+    document.getElementById('compareSearch').addEventListener('input', function() {
+      renderCompareCandidates();
+    });
 
     initScatterDropdowns();
     switchTab();
