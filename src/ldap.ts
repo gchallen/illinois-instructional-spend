@@ -10,11 +10,26 @@ export interface LDAPClient {
   destroy: () => void
 }
 
-export async function connectLDAP(username: string, password: string): Promise<LDAPClient> {
+async function checkReachable(host: string, port: number, timeoutMs: number): Promise<boolean> {
+  const net = await import("net")
+  return new Promise((resolve) => {
+    const socket = net.createConnection({ host, port, timeout: timeoutMs })
+    socket.on("connect", () => { socket.destroy(); resolve(true) })
+    socket.on("timeout", () => { socket.destroy(); resolve(false) })
+    socket.on("error", () => { socket.destroy(); resolve(false) })
+  })
+}
+
+export async function connectLDAP(username: string, password: string, timeoutMs = 3000): Promise<LDAPClient | null> {
+  const reachable = await checkReachable("ad.uillinois.edu", 389, 1000)
+  if (!reachable) throw new Error("LDAP server unreachable")
+
   const client = ldap.createClient({
     url: "ldap://ad.uillinois.edu/",
-    idleTimeout: 1024 * 1024 * 1024,
-    reconnect: true,
+    idleTimeout: timeoutMs,
+    reconnect: false,
+    connectTimeout: timeoutMs,
+    timeout: timeoutMs,
   })
 
   const starttls = promisify(client.starttls).bind(client)
@@ -23,8 +38,24 @@ export async function connectLDAP(username: string, password: string): Promise<L
 
   client.on("error", () => {})
 
-  await starttls({}, [])
-  await bind(username, password)
+  try {
+    await Promise.race([
+      (async () => {
+        await starttls({}, [])
+        await bind(username, password)
+      })(),
+      new Promise<never>((_, reject) => {
+        const t = setTimeout(() => {
+          client.destroy()
+          reject(new Error("LDAP connection timed out"))
+        }, timeoutMs)
+        if (typeof t.unref === "function") t.unref()
+      }),
+    ])
+  } catch (e: any) {
+    client.destroy()
+    throw e
+  }
 
   const searchReturnAll = async (
     base: string,
@@ -64,7 +95,7 @@ function enrollmentRecordToNetID(cn: string): string | undefined {
 }
 
 export async function getEnrollmentForSection(
-  client: LDAPClient,
+  client: LDAPClient | null,
   subject: string,
   number: string,
   sectionName: string,
@@ -76,6 +107,7 @@ export async function getEnrollmentForSection(
   const cacheKey = `ldap-enrollment-${cn.replace(/\s+/g, "_")}`
 
   return cachedFetch<string[]>(cacheKey, ONE_DAY, async () => {
+    if (!client) throw new Error("LDAP unavailable")
     const results = (
       await client.searchReturnAll(
         "OU=Sections,OU=Class Rosters,OU=Register,OU=Urbana,DC=ad,DC=uillinois,DC=edu",

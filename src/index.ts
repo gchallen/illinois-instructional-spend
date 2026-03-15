@@ -27,7 +27,7 @@ interface EnrollmentResult {
 }
 
 async function getEnrollment(
-  client: LDAPClient,
+  client: LDAPClient | null,
   sections: { subject: string; number: string; sectionNumber: string; crn: number; courseKey: string }[],
 ): Promise<EnrollmentResult> {
   const allNetIDs = new Set<string>()
@@ -87,8 +87,14 @@ async function main() {
 
   // Step 2: Connect LDAP
   console.log("=== Step 2: Connecting to LDAP ===")
-  const client = await connectLDAP(username, password)
-  console.log("  Connected.\n")
+  let client: LDAPClient | null = null
+  try {
+    client = await connectLDAP(username, password)
+    console.log("  Connected.\n")
+  } catch (e: any) {
+    console.log(`  LDAP unavailable: ${e.message}`)
+    console.log("  Continuing with cached enrollment data only.\n")
+  }
 
   // Step 3: Process each department
   console.log("=== Step 3: Processing departments ===\n")
@@ -162,7 +168,7 @@ async function main() {
       if (course?.creditHours) totalCreditHours += course.creditHours
     }
 
-    // Get enrollment via LDAP for matched sections
+    // Get enrollment via LDAP (falls back to cache when LDAP unavailable)
     const enrollment = await getEnrollment(client, [...sectionSet.values()])
     console.log(`    Students: ${enrollment.uniqueStudents.toLocaleString()}`)
 
@@ -212,7 +218,7 @@ async function main() {
     console.log(`  ${r.grayBookName.substring(0, 35).padEnd(37)} ${spend.padStart(8)} /student  (${r.matchedFaculty} matched, ${r.uniqueStudents.toLocaleString()} students)`)
   }
 
-  client.destroy()
+  if (client) client.destroy()
   console.log("\nDone.")
 }
 

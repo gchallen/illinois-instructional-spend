@@ -23,21 +23,28 @@ export async function cachedFetch<T>(key: string, ttlMs: number, fetchFn: () => 
   ensureCacheDir()
   const path = cacheFilePath(key)
 
+  let staleData: T | undefined
   if (existsSync(path)) {
     try {
       const entry: CacheEntry<T> = JSON.parse(readFileSync(path, "utf-8"))
       if (Date.now() - entry.timestamp < ttlMs) {
         return entry.data
       }
+      staleData = entry.data
     } catch {
       // Corrupted cache, re-fetch
     }
   }
 
-  const data = await fetchFn()
-  const entry: CacheEntry<T> = { timestamp: Date.now(), data }
-  writeFileSync(path, JSON.stringify(entry))
-  return data
+  try {
+    const data = await fetchFn()
+    const entry: CacheEntry<T> = { timestamp: Date.now(), data }
+    writeFileSync(path, JSON.stringify(entry))
+    return data
+  } catch (e) {
+    if (staleData !== undefined) return staleData
+    throw e
+  }
 }
 
 export const ONE_WEEK = 7 * 24 * 60 * 60 * 1000
