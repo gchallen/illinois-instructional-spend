@@ -362,7 +362,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
 
     <h3 style="font-size:1rem;margin-top:20px;color:#333">Key Decisions</h3>
     <ul>
-      <li><strong>Section filtering:</strong> Independent Study sections (CIS type code &ldquo;IND&rdquo;) are excluded. These are typically thesis supervision or individual research, not classroom instruction. Faculty who only appear in IND sections are not counted as teaching.</li>
+      <li><strong>Section filtering:</strong> Non-classroom section types are excluded: Independent Study (IND), Internship (INT), Research (RES), Study Abroad (STA), and Travel (TRV). These are not classroom instruction. Faculty who only appear in excluded sections are not counted as teaching.</li>
       <li><strong>Credit hours:</strong> Counted per course, not per section. A 3-credit course with 4 sections counts as 3 credit hours, not 12.</li>
     </ul>
 

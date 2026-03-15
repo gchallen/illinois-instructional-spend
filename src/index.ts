@@ -126,8 +126,9 @@ async function main() {
       }
     }
     const totalSections = allCourses.reduce((n, c) => n + c.sections.length, 0)
-    const indSections = allCourses.reduce((n, c) => n + c.sections.filter((s) => s.typeCode === "IND").length, 0)
-    console.log(`    CIS: ${allCourses.length} courses, ${totalSections} sections${indSections > 0 ? ` (${indSections} independent study excluded)` : ""}`)
+    const EXCLUDED_TYPES = new Set(["IND", "INT", "RES", "STA", "TRV"])
+    const excludedSections = allCourses.reduce((n, c) => n + c.sections.filter((s) => EXCLUDED_TYPES.has(s.typeCode)).length, 0)
+    console.log(`    CIS: ${allCourses.length} courses, ${totalSections} sections${excludedSections > 0 ? ` (${excludedSections} non-classroom excluded)` : ""}`)
 
     if (allCourses.length === 0) {
       console.log(`    Skipping — no courses`)

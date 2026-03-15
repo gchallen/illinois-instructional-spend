@@ -36,7 +36,7 @@ export function extractNameParts(grayBookName: string): { lastName: string; firs
 }
 
 /** Section types excluded from matching (not classroom instruction) */
-const EXCLUDED_SECTION_TYPES = new Set(["IND"])
+const EXCLUDED_SECTION_TYPES = new Set(["IND", "INT", "RES", "STA", "TRV"])
 
 /**
  * Match a department's Grey Book faculty against CIS courses for specific subjects.
