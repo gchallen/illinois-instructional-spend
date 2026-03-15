@@ -602,9 +602,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
         const hdr = document.createElement('tr');
         hdr.classList.add('bin-header');
         hdr.innerHTML = \`
-          <td colspan="4"><span style="font-size:0.75rem;margin-right:6px">\${collapsed ? '\\u25B6' : '\\u25BC'}</span>\${bin.label} <span style="font-weight:400;color:#666">(\${bin.departments.length} depts, \${totalStu.toLocaleString()} students)</span></td>
-          <td class="right" colspan="2" style="font-weight:400;color:#666">Median \${metricLabel()}: \${fmtCurrentMetric(med)}</td>
-          <td class="right" colspan="2" style="font-weight:400;color:#666">Mean: \${fmtCurrentMetric(avg)}</td>
+          <td colspan="8"><span style="font-size:0.75rem;margin-right:6px">\${collapsed ? '\\u25B6' : '\\u25BC'}</span>\${bin.label} <span style="font-weight:400;color:#666">(\${bin.departments.length} depts, \${totalStu.toLocaleString()} students) &mdash; Median \${metricLabel()}: \${fmtCurrentMetric(med)}, Mean: \${fmtCurrentMetric(avg)}</span></td>
         \`;
         hdr.addEventListener('click', () => {
           if (collapsedBins.has(bin.index)) collapsedBins.delete(bin.index);
