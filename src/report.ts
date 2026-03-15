@@ -2,7 +2,8 @@ import { writeFileSync, mkdirSync, existsSync } from "fs"
 import { resolve } from "path"
 import type { DepartmentAnalysis } from "./analysis"
 
-const OUTPUT_DIR = resolve(import.meta.dir, "../output")
+const PROJECT_ROOT = resolve(import.meta.dir, "..")
+const OUTPUT_DIR = resolve(PROJECT_ROOT, "output")
 
 function ensureOutputDir() {
   if (!existsSync(OUTPUT_DIR)) {
@@ -1554,7 +1555,8 @@ export function generateReport(results: DepartmentAnalysis[]) {
 </body>
 </html>`;
 
+  writeFileSync(resolve(PROJECT_ROOT, "index.html"), html)
   writeFileSync(resolve(OUTPUT_DIR, "report.html"), html)
-  console.log(`\n  Report written to output/report.html`)
+  console.log(`\n  Report written to index.html`)
   console.log(`  Results written to output/results.json`)
 }
