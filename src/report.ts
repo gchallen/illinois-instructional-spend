@@ -30,6 +30,14 @@ export function generateReport(results: DepartmentAnalysis[]) {
   const totalTeachingSalary = sorted.reduce((s, r) => s + r.totalTeachingFocusedSalary, 0)
   const totalResearchSalary = sorted.reduce((s, r) => s + r.totalResearchFocusedSalary, 0)
   const totalStudents = sorted.reduce((s, r) => s + r.uniqueStudents, 0)
+  const totalSalary = totalTeachingSalary + totalResearchSalary
+  const fmtShortStatic = (n: number) => {
+    const abs = Math.abs(n)
+    if (abs >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B'
+    if (abs >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M'
+    if (abs >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K'
+    return '$' + Math.round(n)
+  }
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -152,8 +160,8 @@ export function generateReport(results: DepartmentAnalysis[]) {
   </style>
 </head>
 <body>
-  <h1>UIUC Instructional Salary Spend Per Student</h1>
-  <div class="subtitle">Spring 2026 — Grey Book Faculty Salaries &times; CIS Course Data &times; Enrollment</div>
+  <h1>UIUC Instructional Salary Spend Per Student — Spring 2026</h1>
+  <div class="subtitle">Grey Book Faculty Salaries &times; CIS Course Data &times; Enrollment</div>
 
   <div class="summary-cards">
     <div class="card">
@@ -166,7 +174,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
     </div>
     <div class="card">
       <div class="card-label">Non-Admin Faculty Salary</div>
-      <div class="card-value" style="color:#333">$${Math.round(totalTeachingSalary + totalResearchSalary).toLocaleString()}</div>
+      <div class="card-value" style="color:#333">${fmtShortStatic(totalSalary)}</div>
     </div>
     <div class="card">
       <div class="card-label">Total Students</div>
@@ -326,7 +334,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
     </p>
     <div class="assumption">Assumption: The Grey Book is the source of truth for faculty names, salaries, and appointment types. We do not use the Grey Book&rsquo;s departmental groupings to determine which courses belong to which department.</div>
     <ol style="line-height:1.7;margin-bottom:12px;margin-left:20px">
-      <li><strong>Faculty lookup.</strong> We search the Spring 2026 CIS course catalog for any instructor whose last name is &ldquo;Smith&rdquo; and first name starts with &ldquo;J&rdquo;. We find Prof. Smith listed as instructor on two courses: WIDG 101 (2 lecture sections) and WIDG 430 (1 section). Independent Study sections are excluded.
+      <li><strong>Faculty lookup.</strong> We search the Spring 2026 CIS course catalog for any instructor whose last name is &ldquo;Smith&rdquo; and first name starts with &ldquo;J&rdquo;. We find Prof. Smith listed as instructor on two courses: WIDG 101 (2 lecture sections) and WIDG 430 (1 section). Non-classroom sections (Independent Study, Internship, Research, Study Abroad, Travel) are excluded.
         <div class="assumption">Assumption: Faculty are matched by normalized last name + first initial. This can miss faculty whose names are recorded differently across systems, and cannot distinguish two faculty with the same last name and first initial.</div>
       </li>
       <li><strong>Match.</strong> Prof. Smith is now &ldquo;matched&rdquo; &mdash; she appears in both the Grey Book and CIS. Her salary counts toward instructional spend. A Grey Book faculty member who is not found in any CIS course section is &ldquo;unmatched,&rdquo; and their salary is not counted toward instructional spend at all.
@@ -478,7 +486,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
 
     function computeMetric(r) {
       const spend = computeSpend(r);
-      if (currentMetric === 'perStudent') return r.uniqueStudents > 0 ? spend / r.uniqueStudents : 0;
+      if (currentMetric === 'perStudent') return blendedPerspective(r, perspectiveAlpha);
       if (currentMetric === 'perCreditHour') return r.totalCreditHours > 0 ? spend / r.totalCreditHours : 0;
       if (currentMetric === 'perCourse') return avgPerCourseSpend(r);
       if (currentMetric === 'facultyStudentRatio') return r.uniqueStudents > 0 ? r.matchedFaculty / r.uniqueStudents : 0;
@@ -492,6 +500,13 @@ export function generateReport(results: DepartmentAnalysis[]) {
     }
 
     function fmt$(n) { return '$' + Math.round(n).toLocaleString(); }
+    function fmtShort$(n) {
+      var abs = Math.abs(n);
+      if (abs >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
+      if (abs >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+      if (abs >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
+      return '$' + Math.round(n);
+    }
     function fmtPct(n) { return (n * 100).toFixed(0) + '%'; }
 
     function fmtCurrentMetric(v) {
@@ -557,7 +572,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
       document.getElementById('deptCount').textContent = d.length + ' depts';
       document.getElementById('studentCount').textContent = d.reduce((s, r) => s + r.uniqueStudents, 0).toLocaleString() + ' students';
 
-      const prefix = currentMetric === 'perStudent' ? '$/Student' : currentMetric === 'perCreditHour' ? '$/Credit Hr' : currentMetric === 'perCourse' ? '$/Course' : currentMetric === 'facultyStudentRatio' ? 'Faculty:Student' : 'Total Spend';
+      const prefix = currentMetric === 'perStudent' ? '$/Student (' + perspectiveDescription(Math.round(perspectiveAlpha * 100)) + ')' : currentMetric === 'perCreditHour' ? '$/Credit Hr' : currentMetric === 'perCourse' ? '$/Course' : currentMetric === 'facultyStudentRatio' ? 'Faculty:Student' : 'Total Spend';
       document.querySelector('th[data-key="computed_spend"]').firstChild.textContent = prefix + ' ';
 
       document.querySelectorAll('#dataTable th').forEach(th => {
@@ -1137,8 +1152,11 @@ export function generateReport(results: DepartmentAnalysis[]) {
       const d = filteredData();
       const aggTeaching = d.reduce((s, r) => s + computeSpend(r), 0);
       const aggResearch = d.reduce((s, r) => s + computeResearchSpend(r), 0);
-      document.getElementById('totalTeachingSpend').textContent = fmt$(aggTeaching);
-      document.getElementById('totalResearchSpend').textContent = fmt$(aggResearch);
+      const aggTotal = aggTeaching + aggResearch;
+      const teachPct = aggTotal > 0 ? Math.round(aggTeaching / aggTotal * 100) : 0;
+      const resPct = aggTotal > 0 ? Math.round(aggResearch / aggTotal * 100) : 0;
+      document.getElementById('totalTeachingSpend').textContent = fmtShort$(aggTeaching) + ' (' + teachPct + '%)';
+      document.getElementById('totalResearchSpend').textContent = fmtShort$(aggResearch) + ' (' + resPct + '%)';
 
       const perStudentVals = d.filter(r => r.uniqueStudents > 0).map(r => computeSpend(r) / r.uniqueStudents);
       document.getElementById('medianPerStudent').textContent = fmt$(median(perStudentVals));
@@ -1214,8 +1232,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
       var pct = parseInt(e.target.value);
       perspectiveAlpha = pct / 100;
       document.getElementById('perspectiveVal').textContent = perspectiveDescription(pct);
-      renderInsights();
-      renderParamSummary();
+      render();
     });
 
     // Sliders
