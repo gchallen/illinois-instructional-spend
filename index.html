@@ -244,12 +244,12 @@
       <tr>
         <th data-key="grayBookName" data-type="string">Department <span class="sort-arrow">▾</span></th>
         <th data-key="totalFaculty" data-type="number" class="right">Faculty <span class="sort-arrow">▾</span></th>
-        <th data-key="matchRate" data-type="number" class="right">% Teaching <span class="sort-arrow">▾</span></th>
+        <th data-key="matchRate" data-type="number" class="right">% Faculty Teaching <span class="sort-arrow">▾</span></th>
         <th data-key="uniqueStudents" data-type="number" class="right">Students <span class="sort-arrow">▾</span></th>
         <th data-key="courseCount" data-type="number" class="right">Courses <span class="sort-arrow">▾</span></th>
         <th data-key="totalProposedSalary" data-type="number" class="right">Faculty Salary <span class="sort-arrow">▾</span></th>
         <th data-key="computed_spend" data-type="number" class="right sorted">Spend <span class="sort-arrow">▾</span></th>
-        <th data-key="computed_teaching_pct" data-type="number" class="right">Teaching % <span class="sort-arrow">▾</span></th>
+        <th data-key="computed_teaching_pct" data-type="number" class="right">% Teaching Spend <span class="sort-arrow">▾</span></th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -375,7 +375,7 @@
       { key: 'computed_metric', label: 'Current Metric', get: r => computeMetric(r), fmt: n => fmtCurrentMetric(n) },
       { key: 'computedSpend', label: 'Teaching Spend', get: r => computeSpend(r), fmt: fmt$ },
       { key: 'computedResearch', label: 'Research Spend', get: r => computeResearchSpend(r), fmt: fmt$ },
-      { key: 'computedTeachingPct', label: 'Teaching %', get: r => computeTeachingPct(r), fmt: fmtPct },
+      { key: 'computedTeachingPct', label: '% Teaching Spend', get: r => computeTeachingPct(r), fmt: fmtPct },
       { key: 'perCourse', label: '$/Course', get: r => avgPerCourseSpend(r), fmt: fmt$ },
       { key: 'facultyStudentRatio', label: 'Faculty:Student Ratio', get: r => r.uniqueStudents > 0 ? r.matchedFaculty / r.uniqueStudents : 0, fmt: n => n > 0 ? '1:' + Math.round(1 / n) : '0' },
       { key: 'notTeachingPct', label: '% Not Teaching', get: r => 1 - r.matchRate, fmt: fmtPct },
