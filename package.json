@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "bun run src/dev-server.ts",
-    "generate": "bun run src/index.ts"
+    "generate": "bun run src/index.ts",
+    "report": "bun run src/regenerate.ts"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
