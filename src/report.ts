@@ -46,7 +46,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/svg+xml" href="${faviconDataUri()}">
-  <title>UIUC Instructional Salary Spend — Spring 2026</title>
+  <title>Illinois Instructional Salary Spend — Spring 2026</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; color: #333; }
@@ -171,7 +171,7 @@ export function generateReport(results: DepartmentAnalysis[]) {
   </style>
 </head>
 <body>
-  <h1>UIUC Instructional Salary Spend Per Student — Spring 2026</h1>
+  <h1>University of Illinois Instructional Salary Spend Per Student — Spring 2026</h1>
   <div class="subtitle">Grey Book Faculty Salaries &times; CIS Course Data &times; Enrollment</div>
 
   <div class="summary-cards">

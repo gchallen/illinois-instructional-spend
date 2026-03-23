@@ -38,7 +38,7 @@ function parseInstructorName(name: string): { lastName: string; firstName: strin
 }
 
 /**
- * Fetch and parse the UIUC GPA dataset.
+ * Fetch and parse the Illinois GPA dataset.
  * Returns a map: subject → Set of "lastname|firstname" keys (lowercased).
  * Only includes recent semesters (2022+) for relevance.
  */

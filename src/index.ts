@@ -72,7 +72,7 @@ async function getEnrollment(
 }
 
 async function main() {
-  console.log("UIUC Instructional Salary Spend Analysis — Spring 2026\n")
+  console.log("University of Illinois Instructional Salary Spend Analysis — Spring 2026\n")
 
   const username = process.env.LDAP_USERNAME
   const password = process.env.LDAP_PASSWORD
